@@ -1,0 +1,71 @@
+{
+  "name": "@effect-x/core",
+  "version": "0.0.1",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "directory": "lib"
+  },
+  "files": [
+    "lib",
+    "!lib/**/*.map"
+  ],
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "scripts": {
+    "build": "build-util build --configPath=../../scripts/pkg/pack.js",
+    "build:watch": "build-util build --configPath=../../scripts/pkg/pack.js --watch",
+    "lint": "eslint ./src",
+    "test": "jest"
+  },
+  "exports": {
+    ".": {
+      "module": "./lib/_esm/index.js",
+      "default": "./lib/index.js"
+    },
+    "./*": {
+      "module": "./lib/_esm/*.js",
+      "default": "./lib/*.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "lib/_types/*",
+        "lib/_types/*/index.d.ts"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@effect-x/build-util": "^1.0.0",
+    "@effect-x/router": "^0.0.7",
+    "@types/qs": "^6.9.7",
+    "@types/ramda": "^0.27.45",
+    "axios": "^0.21.4",
+    "history": "^1.17.0",
+    "qs": "^6.10.1",
+    "ramda": "^0.27.1"
+  },
+  "peerDependencies": {
+    "@effect-x/router": "^0.0.7",
+    "axios": "^0.21.1",
+    "history": "^1.17.0",
+    "qs": "^6.10.1",
+    "ramda": ">=0.27"
+  },
+  "eslintConfig": {
+    "ignorePatterns": [
+      "lib/"
+    ],
+    "extends": [
+      "@effect-x/eslint-config",
+      "@effect-x/eslint-config/react"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off",
+      "react/react-in-jsx-scope": "error",
+      "react/jsx-uses-react": "error"
+    }
+  }
+}

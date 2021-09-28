@@ -1,0 +1,5 @@
+body {
+  color: red;
+  display: grid;
+  grid-auto-flow: row;
+}

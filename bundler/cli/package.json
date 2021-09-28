@@ -1,0 +1,71 @@
+{
+  "name": "@effect-x/cli",
+  "version": "0.0.46",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "directory": "lib"
+  },
+  "files": [
+    "lib",
+    "!lib/**/*.map",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "bin": {
+    "rett-cli": "./lib/bin/index.js"
+  },
+  "scripts": {
+    "build": "build-util build --configPath=../../scripts/bundler/pack.js",
+    "build:watch": "build-util build --configPath=../../scripts/bundler/pack.js --watch",
+    "lint": "eslint ./src",
+    "prepublishOnly": "npm run build",
+    "test": "jest"
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./*": {
+      "default": "./lib/*.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "lib/_types/*",
+        "lib/_types/*/index.d.ts"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@effect-x/build-util": "^1.0.0"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.15.4",
+    "@effect-x/deps": "^0.0.21",
+    "@effect-x/presets": "^0.0.9",
+    "@effect-x/runtime": "^0.0.1",
+    "@effect-x/stats-format-plugin": "^0.0.1",
+    "body-parser": "^1.19.0",
+    "v8-compile-cache": "^2.3.0"
+  },
+  "eslintConfig": {
+    "ignorePatterns": [
+      "lib/"
+    ],
+    "extends": [
+      "@effect-x/eslint-config"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off"
+    },
+    "settings": {
+      "import/ignore": [
+        "@effect-x/deps"
+      ]
+    }
+  }
+}

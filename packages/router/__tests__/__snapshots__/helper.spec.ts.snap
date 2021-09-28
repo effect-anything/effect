@@ -1,0 +1,1393 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`createRouteElements sample 1`] = `
+<Switch>
+  <Route
+    exact={false}
+    path="/a"
+    render={[Function]}
+    sensitive={false}
+    strict={true}
+  />
+  <Route
+    exact={false}
+    path="/b"
+    render={[Function]}
+    sensitive={false}
+    strict={true}
+  />
+  <Route
+    component={[Function]}
+    exact={false}
+    path="/*"
+    sensitive={false}
+    strict={true}
+  />
+</Switch>
+`;
+
+exports[`operators filter 1`] = `
+Array [
+  Object {
+    "children": Array [
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c1",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c1",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c2",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c2",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/p1",
+          "autoRedirectPath": "/a/p1/c",
+        },
+        "path": "/a/p1",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/a",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/a",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/b",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/b",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c/:id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/c/:id",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c/detail/:id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/c/detail/:id",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/p2",
+          "autoRedirectPath": "/a/p2/a",
+        },
+        "path": "/a/p2",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/a",
+      "autoRedirectPath": "/a/p1/c",
+    },
+    "path": "/a",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": Array [
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/:id",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/:id",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/test",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/test",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/b/test/hello/id",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/subPage",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/b/test/hello/subPage",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/detail/:id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/b/test/hello/detail/:id",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/test/hello",
+          "autoRedirectPath": "/b/test/hello/id",
+        },
+        "path": "/b/test/hello",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/b",
+      "autoRedirectPath": "/b/test",
+    },
+    "path": "/b",
+    "routeProps": Object {},
+  },
+]
+`;
+
+exports[`operators filter 2`] = `Array []`;
+
+exports[`operators filter 3`] = `
+Array [
+  Object {
+    "children": Array [
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c1",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c1",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c2",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c2",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/p1",
+          "autoRedirectPath": "/a/p1/c",
+        },
+        "path": "/a/p1",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/a",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/a",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/b",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/b",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c/:id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/c/:id",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c/detail/:id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/c/detail/:id",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/p2",
+          "autoRedirectPath": "/a/p2/a",
+        },
+        "path": "/a/p2",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/a",
+      "autoRedirectPath": "/a/p1/c",
+    },
+    "path": "/a",
+    "routeProps": Object {},
+  },
+]
+`;
+
+exports[`operators findRouteNodeByPathname 1`] = `
+Object {
+  "children": undefined,
+  "component": undefined,
+  "meta": Object {
+    "_path": "/c/detail/:id",
+    "autoRedirectPath": undefined,
+  },
+  "path": "/a/p2/c/detail/:id",
+  "routeProps": Object {},
+}
+`;
+
+exports[`operators flat 1`] = `
+Array [
+  Object {
+    "children": Array [
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c1",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c1",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c2",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c2",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/p1",
+          "autoRedirectPath": "/a/p1/c",
+        },
+        "path": "/a/p1",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/a",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/a",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/b",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/b",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c/:id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/c/:id",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c/detail/:id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/c/detail/:id",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/p2",
+          "autoRedirectPath": "/a/p2/a",
+        },
+        "path": "/a/p2",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/a",
+      "autoRedirectPath": "/a/p1/c",
+    },
+    "path": "/a",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": Array [
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/c",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p1/c",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/c1",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p1/c1",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/c2",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p1/c2",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/p1",
+      "autoRedirectPath": "/a/p1/c",
+    },
+    "path": "/a/p1",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/c",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p1/c",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/c1",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p1/c1",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/c2",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p1/c2",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": Array [
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/a",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p2/a",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/b",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p2/b",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/c/:id",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p2/c/:id",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/c/detail/:id",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p2/c/detail/:id",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/p2",
+      "autoRedirectPath": "/a/p2/a",
+    },
+    "path": "/a/p2",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/a",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p2/a",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/b",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p2/b",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/c/:id",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p2/c/:id",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/c/detail/:id",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p2/c/detail/:id",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": Array [
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/:id",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/:id",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/test",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/test",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/b/test/hello/id",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/subPage",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/b/test/hello/subPage",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/detail/:id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/b/test/hello/detail/:id",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/test/hello",
+          "autoRedirectPath": "/b/test/hello/id",
+        },
+        "path": "/b/test/hello",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/b",
+      "autoRedirectPath": "/b/test",
+    },
+    "path": "/b",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/:id",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/b/:id",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/test",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/b/test",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": Array [
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/id",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/test/hello/id",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/subPage",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/test/hello/subPage",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/detail/:id",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/test/hello/detail/:id",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/test/hello",
+      "autoRedirectPath": "/b/test/hello/id",
+    },
+    "path": "/b/test/hello",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/id",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/b/test/hello/id",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/subPage",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/b/test/hello/subPage",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/detail/:id",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/b/test/hello/detail/:id",
+    "routeProps": Object {},
+  },
+]
+`;
+
+exports[`operators map 1`] = `
+Array [
+  Object {
+    "children": Array [
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c",
+              "autoRedirectPath": undefined,
+              "version": "0.0.2",
+            },
+            "path": "/a/p1/c",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c1",
+              "autoRedirectPath": undefined,
+              "version": "0.0.2",
+            },
+            "path": "/a/p1/c1",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c2",
+              "autoRedirectPath": undefined,
+              "version": "0.0.2",
+            },
+            "path": "/a/p1/c2",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/p1",
+          "autoRedirectPath": "/a/p1/c",
+          "version": "0.0.2",
+        },
+        "path": "/a/p1",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/a",
+              "autoRedirectPath": undefined,
+              "version": "0.0.2",
+            },
+            "path": "/a/p2/a",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/b",
+              "autoRedirectPath": undefined,
+              "version": "0.0.2",
+            },
+            "path": "/a/p2/b",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c/:id",
+              "autoRedirectPath": undefined,
+              "version": "0.0.2",
+            },
+            "path": "/a/p2/c/:id",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c/detail/:id",
+              "autoRedirectPath": undefined,
+              "version": "0.0.2",
+            },
+            "path": "/a/p2/c/detail/:id",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/p2",
+          "autoRedirectPath": "/a/p2/a",
+          "version": "0.0.2",
+        },
+        "path": "/a/p2",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/a",
+      "autoRedirectPath": "/a/p1/c",
+      "version": "0.0.2",
+    },
+    "path": "/a",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": Array [
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/:id",
+          "autoRedirectPath": undefined,
+          "version": "0.0.2",
+        },
+        "path": "/b/:id",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/test",
+          "autoRedirectPath": undefined,
+          "version": "0.0.2",
+        },
+        "path": "/b/test",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/id",
+              "autoRedirectPath": undefined,
+              "version": "0.0.2",
+            },
+            "path": "/b/test/hello/id",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/subPage",
+              "autoRedirectPath": undefined,
+              "version": "0.0.2",
+            },
+            "path": "/b/test/hello/subPage",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/detail/:id",
+              "autoRedirectPath": undefined,
+              "version": "0.0.2",
+            },
+            "path": "/b/test/hello/detail/:id",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/test/hello",
+          "autoRedirectPath": "/b/test/hello/id",
+          "version": "0.0.2",
+        },
+        "path": "/b/test/hello",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/b",
+      "autoRedirectPath": "/b/test",
+      "version": "0.0.2",
+    },
+    "path": "/b",
+    "routeProps": Object {},
+  },
+]
+`;
+
+exports[`operators reduce 1`] = `
+Array [
+  Object {
+    "children": Array [
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c1",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c1",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c2",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p1/c2",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/p1",
+          "autoRedirectPath": "/a/p1/c",
+        },
+        "path": "/a/p1",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/a",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/a",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/b",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/b",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c/:id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/c/:id",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/c/detail/:id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/a/p2/c/detail/:id",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/p2",
+          "autoRedirectPath": "/a/p2/a",
+        },
+        "path": "/a/p2",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/a",
+      "autoRedirectPath": "/a/p1/c",
+    },
+    "path": "/a",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": Array [
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/c",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p1/c",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/c1",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p1/c1",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/c2",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p1/c2",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/p1",
+      "autoRedirectPath": "/a/p1/c",
+    },
+    "path": "/a/p1",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/c",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p1/c",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/c1",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p1/c1",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/c2",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p1/c2",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": Array [
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/a",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p2/a",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/b",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p2/b",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/c/:id",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p2/c/:id",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/c/detail/:id",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/a/p2/c/detail/:id",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/p2",
+      "autoRedirectPath": "/a/p2/a",
+    },
+    "path": "/a/p2",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/a",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p2/a",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/b",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p2/b",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/c/:id",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p2/c/:id",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/c/detail/:id",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/a/p2/c/detail/:id",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": Array [
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/:id",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/:id",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/test",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/test",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": Array [
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/b/test/hello/id",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/subPage",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/b/test/hello/subPage",
+            "routeProps": Object {},
+          },
+          Object {
+            "children": undefined,
+            "component": undefined,
+            "meta": Object {
+              "_path": "/detail/:id",
+              "autoRedirectPath": undefined,
+            },
+            "path": "/b/test/hello/detail/:id",
+            "routeProps": Object {},
+          },
+        ],
+        "component": undefined,
+        "meta": Object {
+          "_path": "/test/hello",
+          "autoRedirectPath": "/b/test/hello/id",
+        },
+        "path": "/b/test/hello",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/b",
+      "autoRedirectPath": "/b/test",
+    },
+    "path": "/b",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/:id",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/b/:id",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/test",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/b/test",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": Array [
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/id",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/test/hello/id",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/subPage",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/test/hello/subPage",
+        "routeProps": Object {},
+      },
+      Object {
+        "children": undefined,
+        "component": undefined,
+        "meta": Object {
+          "_path": "/detail/:id",
+          "autoRedirectPath": undefined,
+        },
+        "path": "/b/test/hello/detail/:id",
+        "routeProps": Object {},
+      },
+    ],
+    "component": undefined,
+    "meta": Object {
+      "_path": "/test/hello",
+      "autoRedirectPath": "/b/test/hello/id",
+    },
+    "path": "/b/test/hello",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/id",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/b/test/hello/id",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/subPage",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/b/test/hello/subPage",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/detail/:id",
+      "autoRedirectPath": undefined,
+    },
+    "path": "/b/test/hello/detail/:id",
+    "routeProps": Object {},
+  },
+]
+`;

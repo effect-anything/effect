@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.bundler.base.json",
+  "compilerOptions": {
+    "checkJs": false,
+    "allowJs": false,
+    "typeRoots": ["./node_modules/@types", "./typings"]
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "__tests__/**/*", "bundles/**/*", "compiled/**/*", "reexported/**/*", "scripts/**/*"]
+}

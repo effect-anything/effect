@@ -1,0 +1,47 @@
+{
+  "name": "@effect-x/eslint-config",
+  "version": "0.0.20",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.js",
+    "react.js"
+  ],
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "main": "index.js",
+  "description": "eslint config",
+  "author": "Piggy Kee <uek0819@gmail.com>",
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/effect-anything/dev-configs"
+  },
+  "homepage": "https://github.com/effect-anything/dev-configs",
+  "dependencies": {
+    "@babel/eslint-parser": "^7.15.7",
+    "@effect-x/presets": "^0.0.9",
+    "@effect-x/prettier-config": "^0.0.6",
+    "@typescript-eslint/eslint-plugin": "^4.31.2",
+    "@typescript-eslint/parser": "^4.31.2",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-config-standard-jsx": "^10.0.0",
+    "eslint-config-standard-react": "^11.0.1",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-import-resolver-typescript": "^2.5.0",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "eslint-plugin-react": "^7.26.0",
+    "eslint-plugin-react-hooks": "^4.2.0"
+  },
+  "peerDependencies": {
+    "eslint": ">=7",
+    "prettier": ">=2",
+    "typescript": ">=4"
+  }
+}

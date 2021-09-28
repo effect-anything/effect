@@ -1,0 +1,25 @@
+{
+  "name": "runtime-error",
+  "version": "0.0.1",
+  "main": "index.ts",
+  "license": "MIT",
+  "scripts": {
+    "start": "rett-cli dev",
+    "build": "rett-cli build"
+  },
+  "devDependencies": {
+    "@types/react-dom": "^17.0.9"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.15.3",
+    "@effect-x/cli": "^0.0.46",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "eslintConfig": {
+    "extends": [
+      "@effect-x/eslint-config",
+      "@effect-x/eslint-config/react"
+    ]
+  }
+}

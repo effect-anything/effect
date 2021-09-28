@@ -1,0 +1,77 @@
+{
+  "name": "@effect-x/ui",
+  "version": "0.0.1",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "directory": "lib"
+  },
+  "files": [
+    "lib",
+    "!lib/**/*.map"
+  ],
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "scripts": {
+    "build": "build-util build --configPath=./pack.js",
+    "build:watch": "build-util build --configPath=./pack.js --watch",
+    "lint": "eslint ./src",
+    "test": "jest"
+  },
+  "exports": {
+    ".": {
+      "module": "./lib/index.js",
+      "default": "./lib/index.js"
+    },
+    "./theme": {
+      "module": "./lib/theme/index.js",
+      "default": "./lib/theme/index.js"
+    },
+    "./theme/*": {
+      "module": "./lib/theme/*.js",
+      "default": "./lib/theme/*.js"
+    },
+    "./*": {
+      "module": "./lib/*.js",
+      "default": "./lib/*.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "lib/_types/*",
+        "lib/_types/*/index.d.ts"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@babel/runtime": "^7.15.4",
+    "@effect-x/build-util": "^1.0.0",
+    "@effect-x/cli": "^0.0.46",
+    "@effect-x/presets": "^0.0.9",
+    "@xstyled/styled-components": "^3.0.3",
+    "babel-plugin-styled-components": "^1.13.2",
+    "react": ">=17"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "@babel/runtime": "^7.15.4",
+    "@xstyled/styled-components": "^3.0.3",
+    "react": ">=17"
+  },
+  "eslintConfig": {
+    "ignorePatterns": [
+      "lib/"
+    ],
+    "extends": [
+      "@effect-x/eslint-config",
+      "@effect-x/eslint-config/react"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off",
+      "react/react-in-jsx-scope": "error",
+      "react/jsx-uses-react": "error"
+    }
+  }
+}

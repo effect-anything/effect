@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true,
+    "jsx": "react",
+    "types": ["@effect-x/deps/typings", "jest"]
+  },
+  "include": ["src/**/*", "./typings"]
+}

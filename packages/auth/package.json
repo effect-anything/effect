@@ -1,0 +1,75 @@
+{
+  "name": "@effect-x/auth",
+  "version": "0.0.1",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "directory": "lib"
+  },
+  "files": [
+    "lib",
+    "!lib/**/*.map"
+  ],
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "scripts": {
+    "build": "build-util build --configPath=../../scripts/pkg/pack.js",
+    "build:watch": "build-util build --configPath=../../scripts/pkg/pack.js --watch",
+    "lint": "eslint ./src",
+    "test": "jest"
+  },
+  "exports": {
+    ".": {
+      "module": "./lib/_esm/index.js",
+      "default": "./lib/index.js"
+    },
+    "./*": {
+      "module": "./lib/_esm/*.js",
+      "default": "./lib/*.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "lib/_types/*",
+        "lib/_types/*/index.d.ts"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@effect-x/build-util": "^1.0.0",
+    "@types/ramda": "^0.27.45",
+    "@types/react": "^17.0.24",
+    "@types/react-router-dom": "^5.3.0",
+    "events": "^3.3.0",
+    "ramda": "^0.27.1"
+  },
+  "dependencies": {
+    "jwt-decode": "^3.1.2"
+  },
+  "peerDependencies": {
+    "events": "^3.3.0"
+  },
+  "config": {
+    "side": [],
+    "modules": [
+      "roles/power-pool",
+      "strategy",
+      "strategy/jwt",
+      "token-manager"
+    ]
+  },
+  "eslintConfig": {
+    "ignorePatterns": [
+      "lib/"
+    ],
+    "extends": [
+      "@effect-x/eslint-config",
+      "@effect-x/eslint-config/react"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off"
+    }
+  }
+}

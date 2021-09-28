@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true,
+    "jsx": "react"
+  },
+  "include": ["./design-system/**/*", "./theme/**/*"],
+  "watchOptions": {
+    "excludeDirectories": ["**/node_modules", "**/__tests__"]
+  }
+}

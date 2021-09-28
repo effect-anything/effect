@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react",
+    "types": ["@effect-x/deps/typings", "jest"]
+  },
+  "include": ["src/**/*", "__tests__/**/*", "./typings"]
+}

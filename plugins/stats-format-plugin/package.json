@@ -1,0 +1,54 @@
+{
+  "name": "@effect-x/stats-format-plugin",
+  "version": "0.0.1",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "directory": "lib"
+  },
+  "files": [
+    "lib",
+    "!lib/**/*.map"
+  ],
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "scripts": {
+    "build": "build-util build --configPath=../../scripts/bundler/pack.js",
+    "build:watch": "build-util build --configPath=../../scripts/bundler/pack.js --watch",
+    "lint": "eslint ./src",
+    "test": "jest"
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./*": {
+      "default": "./lib/*.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "lib/_types/*",
+        "lib/_types/*/index.d.ts"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@effect-x/build-util": "^1.0.0",
+    "memory-fs": "^0.5.0"
+  },
+  "dependencies": {
+    "@effect-x/deps": "^0.0.21"
+  },
+  "eslintConfig": {
+    "extends": [
+      "@effect-x/eslint-config",
+      "@effect-x/eslint-config/react"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off"
+    }
+  }
+}

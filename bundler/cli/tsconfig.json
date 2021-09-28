@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.bundler.base.json",
+  "compilerOptions": {},
+  "include": ["src/**/*", "__tests__/**/*"]
+}

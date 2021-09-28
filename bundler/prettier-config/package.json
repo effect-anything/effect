@@ -1,0 +1,28 @@
+{
+  "name": "@effect-x/prettier-config",
+  "version": "0.0.6",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.js"
+  ],
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "main": "index.js",
+  "description": "prettier config",
+  "author": "Piggy Kee <uek0819@gmail.com>",
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/effect-anything/dev-configs"
+  },
+  "homepage": "https://github.com/effect-anything/dev-configs",
+  "devDependencies": {
+    "prettier": "^2.4.1"
+  },
+  "peerDependencies": {
+    "prettier": ">=2"
+  }
+}

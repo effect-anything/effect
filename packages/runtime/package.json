@@ -1,0 +1,70 @@
+{
+  "name": "@effect-x/runtime",
+  "version": "0.0.1",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "directory": "lib"
+  },
+  "files": [
+    "lib",
+    "!lib/**/*.map"
+  ],
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "scripts": {
+    "build": "build-util build --configPath=../../scripts/bundler/pack.js",
+    "build:watch": "build-util build --configPath=../../scripts/bundler/pack.js --watch",
+    "lint": "eslint ./src",
+    "test": "jest"
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./*": {
+      "default": "./lib/*.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "lib/_types/*",
+        "lib/_types/*/index.d.ts"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@effect-x/build-util": "^1.0.0",
+    "@types/events": "^3.0.0",
+    "@types/node": "^16.10.1",
+    "@types/react-dom": "^17.0.9",
+    "@types/styled-components": "^5.1.14",
+    "babel-plugin-styled-components": "^1.13.2"
+  },
+  "dependencies": {
+    "@effect-x/deps": "^0.0.21",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "styled-components": "^5.3.1"
+  },
+  "peerDependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "eslintConfig": {
+    "ignorePatterns": [
+      "lib/"
+    ],
+    "extends": [
+      "@effect-x/eslint-config",
+      "@effect-x/eslint-config/react"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off",
+      "react/react-in-jsx-scope": "error",
+      "react/jsx-uses-react": "error"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // node 14
+    // https://github.com/tsconfig/bases/blob/main/bases/node14.json
+    "lib": ["ES2020"],
+    "module": "CommonJS",
+    "target": "ES2020"
+  }
+}

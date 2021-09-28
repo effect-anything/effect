@@ -1,0 +1,66 @@
+{
+  "name": "@effect-x/build-util",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "directory": "lib"
+  },
+  "files": [
+    "lib",
+    "!lib/**/*.map"
+  ],
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "bin": {
+    "build-util": "./lib/bin/index.js"
+  },
+  "scripts": {
+    "clean": "rimraf lib",
+    "build": "tsc -p tsconfig.build.json",
+    "build:watch": "tsc -p tsconfig.build.json --watch",
+    "prepublishOnly": "npm run build",
+    "test": "jest"
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./*": {
+      "default": "./lib/*.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "lib/_types/*",
+        "lib/_types/*/index.d.ts"
+      ]
+    }
+  },
+  "devDependencies": {},
+  "dependencies": {
+    "@effect-x/deps": "^0.0.21",
+    "nanoid": "^3.1.25",
+    "slash": "^3.0.0"
+  },
+  "eslintConfig": {
+    "ignorePatterns": [
+      "lib/"
+    ],
+    "extends": [
+      "@effect-x/eslint-config"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off"
+    },
+    "settings": {
+      "import/ignore": [
+        "@effect-x",
+        "typescript"
+      ]
+    }
+  }
+}

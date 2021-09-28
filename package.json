@@ -1,0 +1,48 @@
+{
+  "name": "@effect-x/fabric",
+  "private": true,
+  "scripts": {
+    "build:pkg": "FORCE_COLOR=1 lerna run build --parallel --stream --scope @effect-x/core --scope @effect-x/router --scope @effect-x/auth --scope @effect-x/runtime",
+    "build:pkg:watch": "FORCE_COLOR=1 lerna run build:watch --parallel --stream --scope @effect-x/core --scope @effect-x/router --scope @effect-x/auth --scope @effect-x/runtime",
+    "build:bundler": "FORCE_COLOR=1 lerna run build --parallel --stream --scope @effect-x/cli --scope @effect-x/presets --scope @effect-x/stats-format-plugin",
+    "build:bundler:watch": "FORCE_COLOR=1 lerna run build:watch --parallel --stream --scope @effect-x/cli --scope @effect-x/presets --scope @effect-x/stats-format-plugin",
+    "build:ui": "ultra -r --build --filter \"ui\" build",
+    "build:ui:watch": "ultra -r --build --filter \"ui\" build:watch",
+    "build": "yarn run build:pkg && yarn run build:bundler && yarn run build:ui",
+    "build:watch": "yarn run build:pkg:watch && yarn run build:bundler:watch && yarn run build:ui:watch",
+    "test": "yarn run jest --maxWorkers=50%",
+    "test:watch": "yarn run jest --watchAll --maxWorkers=50%",
+    "postinstall": "husky install",
+    "version:alpha": "lerna version prerelease --conventional-commits --preid=alpha",
+    "version:preminor": "lerna version preminor --conventional-commits",
+    "version:minor": "lerna version minor --conventional-commits",
+    "version:prepatch": "lerna version prepatch --conventional-commits",
+    "version:patch": "lerna version patch --conventional-commits",
+    "version:graduate": "lerna version --conventional-commits --conventional-graduate",
+    "commit": "cz"
+  },
+  "workspaces": [
+    "bundler/*",
+    "plugins/*",
+    "packages/*",
+    "ui"
+  ],
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.2",
+    "babel-jest": "^27.2.2",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^7.32.0",
+    "husky": "^7.0.2",
+    "jest": "^27.2.2",
+    "lerna": "^4.0.0",
+    "prettier": "^2.4.1",
+    "reflect-metadata": "^0.1.13",
+    "typescript": "^4.4.3"
+  },
+  "dependencies": {}
+}

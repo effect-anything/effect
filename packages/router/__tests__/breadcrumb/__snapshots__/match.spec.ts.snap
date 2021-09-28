@@ -1,0 +1,125 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getBreadcrumbs should match breadcrumbs children result 1`] = `Array []`;
+
+exports[`getMetaBreadcrumb should get meta breadcrumbs 1`] = `
+Array [
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/a/b",
+      "autoRedirectPath": undefined,
+      "breadcrumb": Object {
+        "*": "b-0",
+        "/1": Array [
+          Object {
+            "text": "b-1",
+            "to": "to b-1",
+          },
+          Object {
+            "text": "b-1-1",
+            "to": "to b-1-1",
+          },
+        ],
+        "/2": Object {
+          "text": "b-2",
+          "to": "to b-2",
+        },
+        "/3": [Function],
+      },
+    },
+    "path": "/a/b",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/a",
+      "autoRedirectPath": undefined,
+      "breadcrumb": Object {
+        "*": "a-0",
+        "/1": Array [
+          Object {
+            "text": "a-1",
+            "to": "to a-1",
+          },
+          Object {
+            "text": "a-1-1",
+            "to": "to a-1-1",
+          },
+        ],
+        "/2": Object {
+          "text": "a-2",
+          "to": "to a-2",
+        },
+        "/3": [Function],
+      },
+    },
+    "path": "/a",
+    "routeProps": Object {},
+  },
+]
+`;
+
+exports[`getMetaBreadcrumbs should get meta breadcrumbs 1`] = `
+Array [
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/a/b",
+      "autoRedirectPath": undefined,
+      "breadcrumb": Object {
+        "*": "b-0",
+        "/1": Array [
+          Object {
+            "text": "b-1",
+            "to": "to b-1",
+          },
+          Object {
+            "text": "b-1-1",
+            "to": "to b-1-1",
+          },
+        ],
+        "/2": Object {
+          "text": "b-2",
+          "to": "to b-2",
+        },
+        "/3": [Function],
+      },
+    },
+    "path": "/a/b",
+    "routeProps": Object {},
+  },
+  Object {
+    "children": undefined,
+    "component": undefined,
+    "meta": Object {
+      "_path": "/a",
+      "autoRedirectPath": undefined,
+      "breadcrumb": Object {
+        "*": "a-0",
+        "/1": Array [
+          Object {
+            "text": "a-1",
+            "to": "to a-1",
+          },
+          Object {
+            "text": "a-1-1",
+            "to": "to a-1-1",
+          },
+        ],
+        "/2": Object {
+          "text": "a-2",
+          "to": "to a-2",
+        },
+        "/3": [Function],
+      },
+    },
+    "path": "/a",
+    "routeProps": Object {},
+  },
+]
+`;

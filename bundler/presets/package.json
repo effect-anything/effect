@@ -1,0 +1,61 @@
+{
+  "name": "@effect-x/presets",
+  "version": "0.0.9",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "directory": "lib"
+  },
+  "files": [
+    "lib",
+    "!lib/**/*.map"
+  ],
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "scripts": {
+    "build": "build-util build",
+    "build:watch": "build-util build --watch",
+    "lint": "eslint ./src",
+    "prepublishOnly": "npm run build",
+    "test": "jest"
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./*": {
+      "default": "./lib/*.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "lib/_types/*",
+        "lib/_types/*/index.d.ts"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@effect-x/build-util": "^1.0.0"
+  },
+  "dependencies": {
+    "@effect-x/deps": "^0.0.21"
+  },
+  "eslintConfig": {
+    "ignorePatterns": [
+      "lib/"
+    ],
+    "extends": [
+      "@effect-x/eslint-config"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off"
+    },
+    "settings": {
+      "import/ignore": [
+        "@effect-x/deps"
+      ]
+    }
+  }
+}

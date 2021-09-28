@@ -1,0 +1,6 @@
+{
+  "packages": ["bundler/*", "packages/*", "plugins/*", "ui"],
+  "npmClient": "yarn",
+  "useWorkspaces": true,
+  "version": "independent"
+}

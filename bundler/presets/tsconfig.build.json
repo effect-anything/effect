@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.bundler.base.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "lib/_types",
+    "types": ["@effect-x/deps/typings", "node"]
+  },
+  "include": ["src/**/*"]
+}
