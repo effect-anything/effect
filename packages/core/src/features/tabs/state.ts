@@ -17,7 +17,7 @@ export type State = {
 
   readonly activeIndex: number
 
-  updateTab(location: History["location"], children: ReactChildren): OpenTab
+  update(location: History["location"], children: ReactChildren): OpenTab
 
   setTabs(tabs: OpenTab[]): void
 
@@ -29,7 +29,7 @@ export type State = {
 
   findByKey(tabKey: string): OpenTab | undefined
 
-  getNext(key?: string): OpenTab | undefined
+  findNext(key?: string): OpenTab | undefined
 }
 
 export const createTabsStore = (location: History["location"], children: ReactChildren) => {
@@ -39,7 +39,7 @@ export const createTabsStore = (location: History["location"], children: ReactCh
     location,
     tabs: [],
     activeIndex: 0,
-    updateTab: (location, children) => {
+    update: (location, children) => {
       const tab = buildTab(location, children)
 
       set((state) => {
@@ -62,7 +62,11 @@ export const createTabsStore = (location: History["location"], children: ReactCh
       return tab
     },
     setTabs: (tabs) => set({ tabs }),
-    exist: (location) => !!get().findByLocation(location),
+    exist: (location) => {
+      const { findByLocation } = get()
+
+      return !!findByLocation(location)
+    },
     findByLocationIndex: (location) => {
       const { tabs } = get()
 
@@ -104,7 +108,7 @@ export const createTabsStore = (location: History["location"], children: ReactCh
 
       return R.find(tabKeyEq(tabKey), tabs)
     },
-    getNext: (key) => {
+    findNext: (key) => {
       const { tabs } = get()
 
       if (tabs.length === 1) {

@@ -50,14 +50,14 @@ export const useTabs = () => {
 
   const { active, activeKey, activeIndex } = useTabActive()
 
-  const { tabs, append, children, findByLocation, findByKey, getNext, event, setTabs } = useStore((state) => ({
+  const { tabs, append, children, findByLocation, findByKey, findNext, event, setTabs } = useStore((state) => ({
     tabs: state.tabs,
-    append: state.updateTab,
+    append: state.update,
     children: state.children,
     event: state.event,
     findByLocation: state.findByLocation,
     findByKey: state.findByKey,
-    getNext: state.getNext,
+    findNext: state.findNext,
     setTabs: state.setTabs,
   }))
 
@@ -136,7 +136,7 @@ export const useTabs = () => {
 
       options.callback?.(backTo)
     } else {
-      const backTo = options.backTo || getNext()?.location
+      const backTo = options.backTo || findNext()?.location
 
       if (!backTo) {
         return
@@ -196,7 +196,7 @@ export const useTabs = () => {
 
     // 关掉当前 tab
     if (closeTabKey === activeKey) {
-      const backTo = options.backTo || getNext(closeTabKey)?.location
+      const backTo = options.backTo || findNext(closeTabKey)?.location
 
       if (!backTo) {
         return

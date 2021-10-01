@@ -6,16 +6,16 @@ import { Provider, useStore } from "./context"
 import { createTabsStore } from "./state"
 
 const useInternalTabs = () => {
-  const { event, updateTab } = useStore((state) => ({
+  const { event, update } = useStore((state) => ({
     event: state.event,
-    updateTab: state.updateTab,
+    update: state.update,
   }))
 
   const sync = useCallback(
     (location: History["location"], children: ReactChildren) => {
-      updateTab(location, children)
+      update(location, children)
     },
-    [updateTab]
+    [update]
   )
 
   return {
