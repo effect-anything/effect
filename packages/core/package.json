@@ -45,14 +45,16 @@
     "axios": "^0.21.4",
     "history": "^1.17.0",
     "qs": "^6.10.1",
-    "ramda": "^0.27.1"
+    "ramda": "^0.27.1",
+    "zustand": "^3.5.11"
   },
   "peerDependencies": {
     "@effect-x/router": "^0.0.7",
     "axios": "^0.21.1",
     "history": "^1.17.0",
     "qs": "^6.10.1",
-    "ramda": ">=0.27"
+    "ramda": ">=0.27",
+    "zustand": "^3.5.11"
   },
   "eslintConfig": {
     "ignorePatterns": [
@@ -67,5 +69,8 @@
       "react/react-in-jsx-scope": "error",
       "react/jsx-uses-react": "error"
     }
+  },
+  "dependencies": {
+    "hash-string": "^1.0.0"
   }
 }
