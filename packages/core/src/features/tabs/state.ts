@@ -4,22 +4,22 @@ import * as R from "ramda"
 import create from "zustand"
 import { buildLocationInfo, OpenTab, ReactChildren } from "./openTab"
 
-const tabKeyEq = R.propEq("tabKey")
+export const tabKeyEq = R.propEq("tabKey")
 
 export type State = {
   readonly event: EventEmitter
 
   readonly children: ReactChildren
 
+  readonly history: History
+
   readonly location: History["location"]
 
   readonly tabs: OpenTab[]
 
-  readonly activeIndex: number
+  sync(location: History["location"], children: ReactChildren): void
 
-  update(location: History["location"], children: ReactChildren): void
-
-  getChildren(): ReactChildren
+  getSyncValue(): { location: History["location"]; children: ReactChildren }
 
   setTabs(tabs: OpenTab[]): void
 
@@ -36,14 +36,14 @@ export type State = {
   findNext(tabKey?: string): OpenTab | undefined
 }
 
-export const createTabsStore = (location: History["location"], children: ReactChildren) => {
+export const createTabsStore = (history: History, children: ReactChildren) => {
   return create<State>((set, get) => ({
     event: new EventEmitter(),
     children,
-    location,
+    history: history,
+    location: history.location,
     tabs: [],
-    activeIndex: 0,
-    update: (location, children) =>
+    sync: (location, children) =>
       set((state) => {
         const info = buildLocationInfo(location)
         const idx = state.findIndexByLocation(info.location)
@@ -60,14 +60,17 @@ export const createTabsStore = (location: History["location"], children: ReactCh
           return {
             location,
             children,
-            activeIndex: newTabs.length - 1,
             tabs: newTabs,
           }
         }
 
-        return { location, children, activeIndex: idx, tabs: state.tabs }
+        return { location, children, tabs: state.tabs }
       }),
-    getChildren: () => get().children,
+    getSyncValue: () => {
+      const { location, children } = get()
+
+      return { location, children }
+    },
     setTabs: (tabs) => set({ tabs }),
     exist: (location) => {
       const { findByLocation } = get()
@@ -107,7 +110,7 @@ export const createTabsStore = (location: History["location"], children: ReactCh
           state: undefined,
         }
 
-        return JSON.stringify(pathLocation) === JSON.stringify(tabLocation)
+        return R.equals(pathLocation, tabLocation)
       }, tabs)
     },
     findByKey: (tabKey) => {

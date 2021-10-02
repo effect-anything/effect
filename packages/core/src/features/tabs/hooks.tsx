@@ -1,10 +1,10 @@
 import type { LocationDescriptor } from "history"
 import * as R from "ramda"
-import { useHistory } from "react-router-dom"
 import { EventEmitter } from "events"
 import { useRef, useEffect, useCallback } from "react"
 import { buildLocationInfo, getRandomKey, OpenTab } from "./openTab"
 import { useStore } from "./context"
+import { tabKeyEq } from "./state"
 
 export { OpenTab }
 
@@ -36,11 +36,15 @@ function useEventCallback<
 }
 
 export const useTabActive = () => {
-  const { active, activeKey, activeIndex } = useStore((state) => ({
-    active: state.tabs[state.activeIndex],
-    activeKey: state.tabs[state.activeIndex]?.tabKey,
-    activeIndex: state.activeIndex,
-  }))
+  const { active, activeKey, activeIndex } = useStore((state) => {
+    const idx = state.findIndexByLocation(state.location)
+
+    return {
+      active: state.tabs[idx],
+      activeKey: state.tabs[idx]?.tabKey,
+      activeIndex: idx,
+    }
+  })
 
   return {
     active,
@@ -91,14 +95,14 @@ interface CloseMethodOptions {
 }
 
 export const useTabs = () => {
-  const history = useHistory()
   const { active, activeKey, activeIndex } = useTabActive()
 
-  const { event, getChildren, tabs, setTabs, findByLocation, findByKey, findIndexByKey, findNext } = useStore(
+  const { event, history, getSyncValue, tabs, setTabs, findByLocation, findByKey, findIndexByKey, findNext } = useStore(
     (state) => ({
       event: state.event,
+      history: state.history,
       tabs: state.tabs,
-      getChildren: state.getChildren,
+      getSyncValue: state.getSyncValue,
       setTabs: state.setTabs,
       findByLocation: state.findByLocation,
       findByKey: state.findByKey,
@@ -115,12 +119,14 @@ export const useTabs = () => {
     }
 
     setTimeout(() => {
-      const locationInfo = buildLocationInfo(history.location)
+      const { location, children } = getSyncValue()
+
+      const locationInfo = buildLocationInfo(location)
 
       const tab = new OpenTab({
         tabKey: locationInfo.hash,
         location: locationInfo.location,
-        content: getChildren(),
+        content: children,
       })
 
       const name: string = replace ? "replace" : "push"
@@ -309,7 +315,7 @@ export const useTabs = () => {
             replace: options.replace,
             callback: (tab) => {
               const cb = () => {
-                setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
+                setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
 
                 options.callback?.(tab)
               }
@@ -328,7 +334,7 @@ export const useTabs = () => {
             reload: options.reload,
             replace: options.replace,
             callback: (tab) => {
-              setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
+              setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
 
               options.callback?.(tab)
             },
@@ -341,7 +347,7 @@ export const useTabs = () => {
       const backTo = options.backTo
 
       if (!backTo) {
-        setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
+        setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
 
         options.callback?.(active)
 
@@ -355,13 +361,13 @@ export const useTabs = () => {
             if (options.reload) {
               reload(backTo, {
                 callback: () => {
-                  setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
+                  setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
 
                   options.callback?.(backTo)
                 },
               })
             } else {
-              setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
+              setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
 
               options.callback?.(backTo)
             }
@@ -372,7 +378,7 @@ export const useTabs = () => {
           reload: options.reload,
           replace: options.replace,
           callback: (tab) => {
-            setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
+            setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
 
             options.callback?.(tab)
           },
@@ -405,7 +411,7 @@ export const useTabs = () => {
 
     switchTo(tabKey, {
       callback: (tab) => {
-        setTabs(R.reject((x) => x.tabKey !== tabKey, tabs))
+        setTabs(R.reject(tabKeyEq(tabKey), tabs))
 
         callback?.(tab)
       },

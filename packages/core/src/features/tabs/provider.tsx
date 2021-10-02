@@ -1,6 +1,6 @@
 import { History } from "history"
 import React, { FunctionComponent, useEffect } from "react"
-import { useLocation } from "react-router-dom"
+import { useHistory } from "react-router-dom"
 import { Provider, useStore } from "./context"
 import { ReactChildren } from "./openTab"
 import { createTabsStore } from "./state"
@@ -10,23 +10,23 @@ interface TabSyncProps {
 }
 
 const TabSync: FunctionComponent<TabSyncProps> = ({ location, children }) => {
-  const { update } = useStore((state) => ({
-    update: state.update,
+  const { sync } = useStore((state) => ({
+    sync: state.sync,
   }))
 
   useEffect(() => {
-    update(location, children)
-  }, [children, location, update])
+    sync(location, children)
+  }, [children, location, sync])
 
   return null
 }
 
 export const TabView: FunctionComponent<{ tabChildren: ReactChildren }> = ({ tabChildren, children }) => {
-  const location = useLocation()
+  const history = useHistory()
 
   return (
-    <Provider createStore={() => createTabsStore(location, children)}>
-      <TabSync location={location}>{children}</TabSync>
+    <Provider createStore={() => createTabsStore(history, children)}>
+      <TabSync location={history.location}>{children}</TabSync>
       {tabChildren}
     </Provider>
   )
