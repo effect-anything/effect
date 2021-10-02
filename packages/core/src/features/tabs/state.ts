@@ -2,7 +2,7 @@ import { EventEmitter } from "events"
 import type { History, LocationDescriptor } from "history"
 import * as R from "ramda"
 import create from "zustand"
-import { buildTab, OpenTab, ReactChildren } from "./openTab"
+import { buildLocationInfo, OpenTab, ReactChildren } from "./openTab"
 
 const tabKeyEq = R.propEq("tabKey")
 
@@ -17,19 +17,23 @@ export type State = {
 
   readonly activeIndex: number
 
-  update(location: History["location"], children: ReactChildren): OpenTab
+  update(location: History["location"], children: ReactChildren): void
+
+  getChildren(): ReactChildren
 
   setTabs(tabs: OpenTab[]): void
 
   exist(location: LocationDescriptor): boolean
 
-  findByLocationIndex(location: LocationDescriptor): number
-
   findByLocation(location: LocationDescriptor): OpenTab | undefined
+
+  findIndexByLocation(location: LocationDescriptor): number
 
   findByKey(tabKey: string): OpenTab | undefined
 
-  findNext(key?: string): OpenTab | undefined
+  findIndexByKey(tabKey: string): number
+
+  findNext(tabKey?: string): OpenTab | undefined
 }
 
 export const createTabsStore = (location: History["location"], children: ReactChildren) => {
@@ -39,14 +43,19 @@ export const createTabsStore = (location: History["location"], children: ReactCh
     location,
     tabs: [],
     activeIndex: 0,
-    update: (location, children) => {
-      const tab = buildTab(location, children)
-
+    update: (location, children) =>
       set((state) => {
-        const idx = state.findByLocationIndex(location)
+        const info = buildLocationInfo(location)
+        const idx = state.findIndexByLocation(info.location)
 
         if (idx === -1) {
-          const newTabs = R.append(tab, state.tabs)
+          const newTab = new OpenTab({
+            tabKey: info.hash,
+            location: info.location,
+            content: children,
+          })
+
+          const newTabs = R.append(newTab, state.tabs)
 
           return {
             location,
@@ -57,20 +66,25 @@ export const createTabsStore = (location: History["location"], children: ReactCh
         }
 
         return { location, children, activeIndex: idx, tabs: state.tabs }
-      })
-
-      return tab
-    },
+      }),
+    getChildren: () => get().children,
     setTabs: (tabs) => set({ tabs }),
     exist: (location) => {
       const { findByLocation } = get()
 
       return !!findByLocation(location)
     },
-    findByLocationIndex: (location) => {
+    findByLocation: (location) => {
+      const { tabs, findIndexByLocation } = get()
+
+      const idx = findIndexByLocation(location)
+
+      return tabs[idx]
+    },
+    findIndexByLocation: (location) => {
       const { tabs } = get()
 
-      return tabs.findIndex((tab) => {
+      return R.findIndex((tab) => {
         if (typeof location === "string") {
           let fullPath = tab.location.pathname
 
@@ -94,19 +108,17 @@ export const createTabsStore = (location: History["location"], children: ReactCh
         }
 
         return JSON.stringify(pathLocation) === JSON.stringify(tabLocation)
-      })
-    },
-    findByLocation: (location) => {
-      const { tabs, findByLocationIndex } = get()
-
-      const idx = findByLocationIndex(location)
-
-      return tabs[idx]
+      }, tabs)
     },
     findByKey: (tabKey) => {
       const { tabs } = get()
 
       return R.find(tabKeyEq(tabKey), tabs)
+    },
+    findIndexByKey: (tabKey) => {
+      const { tabs } = get()
+
+      return R.findIndex(tabKeyEq(tabKey), tabs)
     },
     findNext: (key) => {
       const { tabs } = get()
@@ -115,7 +127,7 @@ export const createTabsStore = (location: History["location"], children: ReactCh
         return
       }
 
-      const removeIndex = tabs.findIndex(tabKeyEq(key))
+      const removeIndex = R.findIndex(tabKeyEq(key), tabs)
 
       const nextIndex = removeIndex >= 1 ? removeIndex - 1 : removeIndex + 1
 

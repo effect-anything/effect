@@ -1,11 +1,39 @@
 import type { LocationDescriptor } from "history"
 import * as R from "ramda"
+import { useHistory } from "react-router-dom"
 import { EventEmitter } from "events"
-import { useLocation } from "react-router-dom"
-import { OpenTab } from "./openTab"
+import { useRef, useEffect, useCallback } from "react"
+import { buildLocationInfo, getRandomKey, OpenTab } from "./openTab"
 import { useStore } from "./context"
 
 export { OpenTab }
+
+type ParamType<T> = T extends () => unknown ? never : T extends (...args: infer P) => unknown ? P : T
+
+type Fn = (() => unknown) | ((...args: any) => unknown)
+
+function useEventCallback<
+  T extends Fn,
+  F extends ParamType<T> extends never ? () => ReturnType<T> : (...args: ParamType<T>) => ReturnType<T>
+>(fn: T, deps: ReadonlyArray<unknown> = []) {
+  const ref = useRef<T>(fn)
+
+  useEffect(() => {
+    ref.current = fn
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fn, ...deps])
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useCallback(
+    ((...args: any) => {
+      const callback = ref.current
+
+      // eslint-disable-next-line node/no-callback-literal
+      return callback(...args)
+    }) as F,
+    [ref]
+  )
+}
 
 export const useTabActive = () => {
   const { active, activeKey, activeIndex } = useStore((state) => ({
@@ -27,41 +55,83 @@ export const useTabEvent = (): EventEmitter => {
   return event
 }
 
-interface MethodDefaultOptions {
+interface HistoryMethodOptions {
   replace?: boolean
+  callback?: (tab: OpenTab) => void
+}
+
+interface PushMethodOptions {
   reload?: boolean
-  callback?: (backToTab?: OpenTab) => void
+  replace?: boolean
+  callback?: (tab: OpenTab) => void
 }
 
-export interface IPushOptions extends MethodDefaultOptions {
-  force?: boolean
+interface SwitchToMethodOptions {
+  replace?: boolean
+  callback?: (tab: OpenTab) => void
 }
 
-export interface IBackToOptions extends MethodDefaultOptions {
+interface ReloadMethodOptions {
+  switch?: boolean
+  callback?: (tab: OpenTab) => void
+}
+
+interface BackToMethodOptions {
   backTo?: OpenTab | LocationDescriptor
+  reload?: boolean
+  replace?: boolean
+  callback?: (tab: OpenTab) => void
 }
 
-export interface ICloseOptions extends MethodDefaultOptions {
+interface CloseMethodOptions {
   backTo?: OpenTab | LocationDescriptor
+  reload?: boolean
+  replace?: boolean
+  callback?: (tab: OpenTab) => void
 }
 
 export const useTabs = () => {
-  const location = useLocation()
-
+  const history = useHistory()
   const { active, activeKey, activeIndex } = useTabActive()
 
-  const { tabs, append, children, findByLocation, findByKey, findNext, event, setTabs } = useStore((state) => ({
-    tabs: state.tabs,
-    append: state.update,
-    children: state.children,
-    event: state.event,
-    findByLocation: state.findByLocation,
-    findByKey: state.findByKey,
-    findNext: state.findNext,
-    setTabs: state.setTabs,
-  }))
+  const { event, getChildren, tabs, setTabs, findByLocation, findByKey, findIndexByKey, findNext } = useStore(
+    (state) => ({
+      event: state.event,
+      tabs: state.tabs,
+      getChildren: state.getChildren,
+      setTabs: state.setTabs,
+      findByLocation: state.findByLocation,
+      findByKey: state.findByKey,
+      findIndexByKey: state.findIndexByKey,
+      findNext: state.findNext,
+    })
+  )
 
-  const switchTo = (tabKey: string, replace = false) => {
+  const historyChange = (path: LocationDescriptor, { replace, callback }: HistoryMethodOptions) => {
+    if (replace) {
+      history.replace(path)
+    } else {
+      history.push(path)
+    }
+
+    setTimeout(() => {
+      const locationInfo = buildLocationInfo(history.location)
+
+      const tab = new OpenTab({
+        tabKey: locationInfo.hash,
+        location: locationInfo.location,
+        content: getChildren(),
+      })
+
+      const name: string = replace ? "replace" : "push"
+
+      event.emit(name, tab)
+
+      callback?.(tab)
+    }, 0)
+  }
+
+  const switchTo = useEventCallback((tabKey: string, options: SwitchToMethodOptions = {}) => {
     const targetTab = findByKey(tabKey)
 
     if (!targetTab) {
@@ -77,199 +147,270 @@ export const useTabs = () => {
       search: targetTab.location.search,
     })
 
-    if (replace) {
-      event.emit("replace", path)
-    } else {
-      event.emit("push", path)
-    }
-  }
+    historyChange(path, { replace: options.replace, callback: options.callback })
+  })
 
-  const push = (
-    path: LocationDescriptor,
-    options: IPushOptions = {
-      reload: false,
-      force: false,
-      replace: false,
-    }
-  ): [OpenTab, string] => {
+  const push = useEventCallback((path: LocationDescriptor, options: PushMethodOptions = {}) => {
     const findTab = findByLocation(path)
 
     if (findTab) {
-      switchTo(findTab.tabKey, options.replace)
+      switchTo(findTab.tabKey, {
+        replace: options.replace,
+        callback: () => {
+          const idx = findIndexByKey(findTab.tabKey)
 
-      if (typeof path !== "string") {
-        findTab.location.state = path.state
-      }
+          if (typeof path !== "string") {
+            setTabs(
+              R.adjust(
+                idx,
+                (tab) => {
+                  tab.location.state = path.state
 
-      if (options?.reload) {
-        reload(findTab)
-      }
+                  return tab
+                },
+                tabs
+              )
+            )
+          }
 
-      return [findTab, "switchTo"]
+          if (options?.reload) {
+            reload(findTab, {
+              callback: options.callback,
+            })
+          } else {
+            options.callback?.(findTab)
+          }
+        },
+      })
+
+      return
     }
 
-    if (options.replace) {
-      event.emit("replace", path)
-    } else {
-      event.emit("push", path)
-    }
+    historyChange(path, {
+      replace: options.replace,
+      callback: options.callback,
+    })
+  })
 
-    const newTab = append(location, children)
-
-    return [newTab, "push"]
-  }
-
-  const goBack = (
-    options: IBackToOptions = {
-      reload: false,
-      replace: false,
-    }
-  ) => {
+  const goBack = useEventCallback((options: BackToMethodOptions) => {
     if (options.backTo && options.backTo instanceof OpenTab) {
       const backTo = options.backTo
 
-      switchTo(backTo.tabKey, options.replace)
-
-      if (options.reload) {
-        reload(backTo)
-      }
-
-      options.callback?.(backTo)
-    } else {
-      const backTo = options.backTo || findNext()?.location
-
-      if (!backTo) {
-        return
-      }
-
-      const [tab] = push(backTo, {
-        reload: options.reload,
+      switchTo(backTo.tabKey, {
         replace: options.replace,
+        callback: (tab) => {
+          if (options.reload) {
+            reload(backTo, {
+              callback: options.callback,
+            })
+          } else {
+            options.callback?.(tab)
+          }
+        },
       })
 
-      options.callback?.(tab)
+      return
     }
-  }
 
-  const reload = (tab?: OpenTab | OpenTab["tabKey"], isSwitchTo = true) => {
+    const backTo = options.backTo || findNext(activeKey)?.location
+
+    if (!backTo) {
+      return
+    }
+
+    push(backTo, {
+      reload: options.reload,
+      replace: options.replace,
+      callback: options.callback,
+    })
+  })
+
+  const reload = useEventCallback((tab: OpenTab | string, options: ReloadMethodOptions = { switch: true }) => {
+    const reloadKey = (tab: OpenTab) => {
+      const idx = findIndexByKey(tab.tabKey)
+
+      setTabs(
+        R.adjust(
+          idx,
+          (tab) => {
+            tab.properties.key = getRandomKey()
+
+            return tab
+          },
+          tabs
+        )
+      )
+
+      event.emit("reload", tab)
+    }
+
     if (tab && tab instanceof OpenTab) {
       if (tab.tabKey !== activeKey) {
-        switchTo(tab.tabKey)
+        switchTo(tab.tabKey, {
+          callback: () => {
+            reloadKey(tab)
+
+            options.callback?.(tab)
+          },
+        })
+      } else {
+        reloadKey(tab)
+
+        options.callback?.(tab)
       }
-
-      // TODO:
-      // clearPageQuery();
-
-      tab.reload()
 
       return
     }
 
     const reloadTab = tab ? findByKey(tab) || active : active
+    const isSwitch = options.switch ?? true
 
-    if (!reloadTab) {
-      return
+    if (reloadTab.tabKey !== activeKey && isSwitch) {
+      switchTo(reloadTab.tabKey, {
+        callback: () => {
+          reloadKey(reloadTab)
+
+          options.callback?.(reloadTab)
+        },
+      })
+    } else {
+      reloadKey(reloadTab)
+
+      options.callback?.(reloadTab)
     }
+  })
 
-    if (reloadTab.tabKey !== activeKey && isSwitchTo) {
-      switchTo(reloadTab.tabKey)
-    }
+  const close = useEventCallback(
+    (
+      tab: OpenTab | string | undefined,
+      options: CloseMethodOptions = {
+        reload: false,
+        replace: false,
+      }
+    ) => {
+      const closeTab = tab ? (tab instanceof OpenTab ? tab : findByKey(tab)) : active
+      const closeTabKey = closeTab?.tabKey
 
-    // TODO:
-    // clearPageQuery();
-
-    reloadTab.reload()
-  }
-
-  const close = (
-    tab: OpenTab | string | undefined,
-    options: ICloseOptions = {
-      reload: false,
-      replace: false,
-    }
-  ) => {
-    const closeTabKey = tab ? (tab instanceof OpenTab ? tab.tabKey : tab) : activeKey
-
-    if (!closeTabKey) {
-      return
-    }
-
-    // 关掉当前 tab
-    if (closeTabKey === activeKey) {
-      const backTo = options.backTo || findNext(closeTabKey)?.location
-
-      if (!backTo) {
+      if (!closeTab || !closeTabKey) {
         return
       }
 
-      if (backTo instanceof OpenTab) {
-        setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
+      if (closeTabKey === activeKey) {
+        const backTo = options.backTo || findNext(closeTabKey)?.location
 
-        switchTo(backTo.tabKey, options.replace)
-
-        if (options.reload) {
-          reload(backTo)
+        if (!backTo) {
+          return
         }
 
-        options.callback?.(backTo)
-      } else {
-        const [tab] = push(backTo, {
-          reload: options.reload,
-          replace: options.replace,
-        })
+        if (backTo instanceof OpenTab) {
+          console.log(backTo.tabKey, closeTabKey, options)
 
-        setTabs(R.filter((x) => x.tabKey !== closeTabKey, tabs))
+          switchTo(backTo.tabKey, {
+            replace: options.replace,
+            callback: (tab) => {
+              const cb = () => {
+                setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
 
-        options.callback?.(tab)
+                options.callback?.(tab)
+              }
+
+              if (options.reload) {
+                reload(backTo, {
+                  callback: cb,
+                })
+              } else {
+                cb()
+              }
+            },
+          })
+        } else {
+          push(backTo, {
+            reload: options.reload,
+            replace: options.replace,
+            callback: (tab) => {
+              setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
+
+              options.callback?.(tab)
+            },
+          })
+        }
+
+        return
       }
-    } else {
-      setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
 
       const backTo = options.backTo
 
       if (!backTo) {
+        setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
+
+        options.callback?.(active)
+
         return
       }
 
       if (backTo instanceof OpenTab) {
-        switchTo(backTo.tabKey, options.replace)
+        switchTo(backTo.tabKey, {
+          replace: options.replace,
+          callback: () => {
+            if (options.reload) {
+              reload(backTo, {
+                callback: () => {
+                  setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
 
-        if (options.reload) {
-          reload(backTo)
-        }
+                  options.callback?.(backTo)
+                },
+              })
+            } else {
+              setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
 
-        options.callback?.(backTo)
+              options.callback?.(backTo)
+            }
+          },
+        })
       } else {
-        const [tab] = push(backTo, {
+        push(backTo, {
           reload: options.reload,
           replace: options.replace,
-        })
+          callback: (tab) => {
+            setTabs(R.reject((x) => x.tabKey === closeTabKey, tabs))
 
-        options.callback?.(tab)
+            options.callback?.(tab)
+          },
+        })
       }
     }
-  }
+  )
 
-  const closeRight = (tab: OpenTab, index: number) => {
+  const closeRight = useEventCallback((tab: OpenTab, index: number, callback?: (tab: OpenTab) => void) => {
     const start = R.max(index + 1, 0)
     const count = R.max(1, tabs.length - index - 1)
 
-    setTabs(R.remove(start, count, tabs))
-
     if (tab.tabKey !== activeKey) {
-      switchTo(tab.tabKey)
+      switchTo(tab.tabKey, {
+        callback: () => {
+          setTabs(R.remove(start, count, tabs))
+
+          callback?.(tab)
+        },
+      })
+    } else {
+      setTabs(R.remove(start, count, tabs))
+
+      callback?.(tab)
     }
-  }
+  })
 
-  const closeOthers = (tab?: OpenTab) => {
-    const key = tab?.tabKey || activeKey
+  const closeOthers = useEventCallback((tab: OpenTab | undefined, callback?: (tab: OpenTab) => void) => {
+    const tabKey = tab?.tabKey ?? activeKey
 
-    setTabs(R.reject((x) => x.tabKey !== key, tabs))
+    switchTo(tabKey, {
+      callback: (tab) => {
+        setTabs(R.reject((x) => x.tabKey !== tabKey, tabs))
 
-    if (key) {
-      switchTo(key)
-    }
-  }
+        callback?.(tab)
+      },
+    })
+  })
 
   return { active, activeKey, activeIndex, tabs, switchTo, push, goBack, reload, close, closeRight, closeOthers }
 }

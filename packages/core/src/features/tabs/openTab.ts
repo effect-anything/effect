@@ -40,6 +40,8 @@ const withChildren = (children: ReactNode): FunctionComponent => {
   return Wrap
 }
 
+export const getRandomKey = () => Math.ceil(Math.random() * 10000) + ""
+
 let id = 1
 
 export class OpenTab {
@@ -65,25 +67,18 @@ export class OpenTab {
     this.content = withChildren(content)
 
     this.properties = {
-      key: Math.random() + "",
-      title: "TODO",
+      key: getRandomKey(),
+      // TODO:
+      title: "title",
     }
-  }
-
-  public reload() {
-    this.properties.key = Math.random() + ""
-
-    return this
   }
 }
 
-const buildLocationInfo = R.memoizeWith(JSON.stringify, (location: History["location"]) => {
-  const locationOmit = R.omit(["key", "hash"], location)
-
+export const buildLocationInfo = R.memoizeWith(JSON.stringify, (location: History["location"]): LocationTabInfo => {
   const newLocation = {
-    pathname: locationOmit.pathname,
-    search: locationOmit.search ? decodeURIComponent(locationOmit.search) : "",
-    state: typeof locationOmit.state !== "undefined" ? locationOmit.state : undefined,
+    pathname: location.pathname,
+    search: location.search ? decodeURIComponent(location.search) : "",
+    state: typeof location.state !== "undefined" ? location.state : undefined,
   }
 
   const hashStr = hash(JSON.stringify(newLocation))
@@ -93,13 +88,3 @@ const buildLocationInfo = R.memoizeWith(JSON.stringify, (location: History["loca
     location: newLocation,
   }
 })
-
-export const buildTab = (location: History["location"], children: ReactChildren): OpenTab => {
-  const l = buildLocationInfo(location)
-
-  return new OpenTab({
-    tabKey: l.hash,
-    content: children,
-    location: location,
-  })
-}

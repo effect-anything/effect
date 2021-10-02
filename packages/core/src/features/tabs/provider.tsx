@@ -1,64 +1,22 @@
-import type { History } from "history"
-import React, { FunctionComponent, ReactNode, useCallback, useEffect } from "react"
-import { useHistory, useLocation } from "react-router-dom"
-import { ReactChildren } from "./openTab"
+import { History } from "history"
+import React, { FunctionComponent, useEffect } from "react"
+import { useLocation } from "react-router-dom"
 import { Provider, useStore } from "./context"
+import { ReactChildren } from "./openTab"
 import { createTabsStore } from "./state"
 
-const useInternalTabs = () => {
-  const { event, update } = useStore((state) => ({
-    event: state.event,
+interface TabSyncProps {
+  location: History["location"]
+}
+
+const TabSync: FunctionComponent<TabSyncProps> = ({ location, children }) => {
+  const { update } = useStore((state) => ({
     update: state.update,
   }))
 
-  const sync = useCallback(
-    (location: History["location"], children: ReactChildren) => {
-      update(location, children)
-    },
-    [update]
-  )
-
-  return {
-    event,
-    sync,
-  }
-}
-
-const useChildrenChange = (children: ReactNode | undefined) => {
-  const location = useLocation()
-  const { sync } = useInternalTabs()
-
   useEffect(() => {
-    sync(location, children)
-  }, [children, location, sync])
-
-  return null
-}
-
-const useEventChange = () => {
-  const history = useHistory()
-
-  const { event } = useInternalTabs()
-
-  useEffect(() => {
-    event.on("push", (path) => {
-      history.push(path)
-    })
-
-    event.on("replace", (path) => {
-      history.replace(path)
-    })
-
-    return () => {}
-  }, [event, history])
-
-  return null
-}
-
-const TabSync: FunctionComponent = ({ children }) => {
-  useEventChange()
-
-  useChildrenChange(children)
+    update(location, children)
+  }, [children, location, update])
 
   return null
 }
@@ -68,7 +26,7 @@ export const TabView: FunctionComponent<{ tabChildren: ReactChildren }> = ({ tab
 
   return (
     <Provider createStore={() => createTabsStore(location, children)}>
-      <TabSync>{children}</TabSync>
+      <TabSync location={location}>{children}</TabSync>
       {tabChildren}
     </Provider>
   )
