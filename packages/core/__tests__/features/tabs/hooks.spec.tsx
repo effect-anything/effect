@@ -3,15 +3,15 @@ import { createBrowserHistory, History } from "history"
 import React, { PropsWithChildren } from "react"
 import { renderHook, act } from "@testing-library/react-hooks"
 import { Router, Route } from "react-router-dom"
-import { TabView } from "../../../src/features/tabs/provider"
+import { Provider as TabsProvider } from "../../../src/features/tabs/provider"
 import { useTabs, OpenTab } from "../../../src/features/tabs/hooks"
 
 const wrapper = ({ history, children }: PropsWithChildren<{ history: History }>) => {
   return (
     <Router history={history}>
-      <TabView history={history} tabChildren={children}>
+      <TabsProvider history={history} tabChildren={children}>
         <Route path="/" />
-      </TabView>
+      </TabsProvider>
     </Router>
   )
 }

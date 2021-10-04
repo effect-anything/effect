@@ -1,10 +1,10 @@
 import { History } from "history"
 import React, { FunctionComponent, useEffect } from "react"
-import { Provider, useStore } from "./context"
+import { TabsZustandProvider, useStore } from "./context"
 import { ReactChildren } from "./openTab"
 import { createTabsStore } from "./state"
 
-const TabSync: FunctionComponent<{ history: History }> = ({ history, children }) => {
+const TabsSync: FunctionComponent<{ history: History }> = ({ history, children }) => {
   const location = useStore((state) => state.location)
   const { update, updateLocation, setHistoryPromises } = useStore((state) => ({
     update: state.update,
@@ -39,27 +39,27 @@ const TabSync: FunctionComponent<{ history: History }> = ({ history, children })
       })
     }
 
-    const subscribe = history.listen((location) => {
+    const unSubscribe = history.listen((location) => {
       updateLocation(location)
 
       checkHistoryCallback(location)
     })
 
-    return () => subscribe()
+    return () => unSubscribe()
   }, [history, setHistoryPromises, updateLocation])
 
   return null
 }
 
-export const TabView: FunctionComponent<{ history: History; tabChildren?: ReactChildren }> = ({
+export const Provider: FunctionComponent<{ history: History; tabChildren?: ReactChildren }> = ({
   history,
   tabChildren,
   children,
 }) => {
   return (
-    <Provider createStore={() => createTabsStore(history, children)}>
-      <TabSync history={history}>{children}</TabSync>
+    <TabsZustandProvider createStore={() => createTabsStore(history, children)}>
+      <TabsSync history={history}>{children}</TabsSync>
       {tabChildren}
-    </Provider>
+    </TabsZustandProvider>
   )
 }

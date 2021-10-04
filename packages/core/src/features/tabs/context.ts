@@ -1,9 +1,9 @@
 import createContext from "zustand/context"
 import { State } from "./state"
 
-const { Provider, useStore } = createContext<State>()
+const { Provider: TabsZustandProvider, useStore } = createContext<State>()
 
 // @ts-expect-error
-Provider.displayName = "TabsProvider"
+TabsZustandProvider.displayName = "TabsProvider"
 
-export { Provider, useStore }
+export { TabsZustandProvider, useStore }
