@@ -40,11 +40,16 @@
   "devDependencies": {
     "@effect-x/build-util": "^1.0.0",
     "@effect-x/router": "^0.0.7",
+    "@testing-library/jest-dom": "^5.14.1",
+    "@testing-library/react": "^12.1.2",
+    "@testing-library/react-hooks": "^7.0.2",
+    "@testing-library/user-event": "^13.2.1",
     "@types/qs": "^6.9.7",
     "@types/ramda": "^0.27.45",
     "axios": "^0.21.4",
-    "history": "^1.17.0",
+    "history": "^4.9.0",
     "qs": "^6.10.1",
+    "react-router-dom": "^5.3.0",
     "ramda": "^0.27.1",
     "zustand": "^3.5.11"
   },

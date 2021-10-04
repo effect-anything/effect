@@ -19,8 +19,6 @@ export type State = {
 
   sync(location: History["location"], children: ReactChildren): void
 
-  getSyncValue(): { location: History["location"]; children: ReactChildren }
-
   setTabs(tabs: OpenTab[]): void
 
   exist(location: LocationDescriptor): boolean

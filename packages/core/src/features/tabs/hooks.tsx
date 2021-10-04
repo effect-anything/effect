@@ -2,7 +2,7 @@ import type { LocationDescriptor } from "history"
 import * as R from "ramda"
 import { EventEmitter } from "events"
 import { useRef, useEffect, useCallback } from "react"
-import { buildLocationInfo, getRandomKey, OpenTab } from "./openTab"
+import { getRandomKey, OpenTab } from "./openTab"
 import { useStore } from "./context"
 import { tabKeyEq } from "./state"
 
@@ -97,44 +97,75 @@ interface CloseMethodOptions {
 export const useTabs = () => {
   const { active, activeKey, activeIndex } = useTabActive()
 
-  const { event, history, getSyncValue, tabs, setTabs, findByLocation, findByKey, findIndexByKey, findNext } = useStore(
-    (state) => ({
-      event: state.event,
-      history: state.history,
-      tabs: state.tabs,
-      getSyncValue: state.getSyncValue,
-      setTabs: state.setTabs,
-      findByLocation: state.findByLocation,
-      findByKey: state.findByKey,
-      findIndexByKey: state.findIndexByKey,
-      findNext: state.findNext,
+  const { event, history, tabs, setTabs, findByLocation, findByKey, findIndexByKey, findNext } = useStore((state) => ({
+    event: state.event,
+    history: state.history,
+    tabs: state.tabs,
+    setTabs: state.setTabs,
+    findByLocation: state.findByLocation,
+    findByKey: state.findByKey,
+    findIndexByKey: state.findIndexByKey,
+    findNext: state.findNext,
+  }))
+
+  const promisesRef = useRef(new Map())
+
+  useEffect(() => {
+    history.listen((location) => {
+      const id = JSON.stringify({
+        pathname: location.pathname,
+        state: location.state,
+        search: location.search,
+      })
+
+      const task = promisesRef.current.get(id)
+
+      if (task) {
+        task.resolve(location)
+
+        promisesRef.current.delete(id)
+      }
     })
-  )
+  }, [history])
 
   const historyChange = (path: LocationDescriptor, { replace, callback }: HistoryMethodOptions) => {
+    let _resolve: (value: LocationDescriptor) => void = () => {}
+    let _reject: () => void = () => {}
+
+    // eslint-disable-next-line no-new
+    const promise = new Promise<LocationDescriptor>((resolve, reject) => {
+      _resolve = resolve
+      _reject = reject
+    })
+
+    promisesRef.current.set(
+      JSON.stringify(
+        typeof path === "string"
+          ? {
+              pathname: path,
+              state: undefined,
+              search: "",
+            }
+          : path
+      ),
+      { resolve: _resolve, reject: _reject }
+    )
+
+    promise.then((location) => {
+      const currentTab = findByLocation(location)!
+
+      const name: string = replace ? "replace" : "push"
+
+      event.emit(name, currentTab)
+
+      callback?.(currentTab)
+    })
+
     if (replace) {
       history.replace(path)
     } else {
       history.push(path)
     }
-
-    setTimeout(() => {
-      const { location, children } = getSyncValue()
-
-      const locationInfo = buildLocationInfo(location)
-
-      const tab = new OpenTab({
-        tabKey: locationInfo.hash,
-        location: locationInfo.location,
-        content: children,
-      })
-
-      const name: string = replace ? "replace" : "push"
-
-      event.emit(name, tab)
-
-      callback?.(tab)
-    }, 0)
   }
 
   const switchTo = useEventCallback((tabKey: string, options: SwitchToMethodOptions = {}) => {
@@ -148,10 +179,11 @@ export const useTabs = () => {
       return
     }
 
-    const path = Object.assign(targetTab.location.state ? { state: targetTab.location.state } : {}, {
+    const path = {
+      state: targetTab.location.state || undefined,
       pathname: targetTab.location.pathname,
       search: targetTab.location.search,
-    })
+    }
 
     historyChange(path, { replace: options.replace, callback: options.callback })
   })
