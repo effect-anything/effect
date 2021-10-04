@@ -72,11 +72,13 @@ describe("first test", () => {
 
     const switchToCallbackFn = jest.fn((tab: OpenTab) => tab)
 
-    result.current.switchTo(result.current.tabs[0].tabKey, {
-      callback: switchToCallbackFn,
-    })
+    await act(async () => {
+      result.current.switchTo(result.current.tabs[0].tabKey, {
+        callback: switchToCallbackFn,
+      })
 
-    await waitForNextUpdate()
+      await waitForNextUpdate()
+    })
 
     expect(switchToCallbackFn).toHaveBeenCalled()
     expect(switchToCallbackFn).toHaveBeenCalledTimes(1)
@@ -113,11 +115,13 @@ describe("first test", () => {
 
     const pushCallbackFn = jest.fn((tab: OpenTab) => tab)
 
-    result.current.push("/", {
-      callback: pushCallbackFn,
-    })
+    await act(async () => {
+      result.current.push("/", {
+        callback: pushCallbackFn,
+      })
 
-    await waitForNextUpdate()
+      await waitForNextUpdate()
+    })
 
     expect(pushCallbackFn).toHaveBeenCalled()
     expect(pushCallbackFn).toHaveBeenCalledTimes(1)
@@ -151,11 +155,11 @@ describe("first test", () => {
     expect(result.current.active.location.pathname).toEqual("/tab")
 
     // close current "tab"
-    act(() => {
+    await act(async () => {
       result.current.close(result.current.active)
-    })
 
-    await waitForNextUpdate()
+      await waitForNextUpdate()
+    })
 
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)

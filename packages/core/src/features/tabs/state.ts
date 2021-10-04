@@ -6,6 +6,10 @@ import { buildLocationInfo, OpenTab, ReactChildren } from "./openTab"
 
 export const tabKeyEq = R.propEq("tabKey")
 
+type HistoryPromiseSave = {
+  resolve: (_: History["location"]) => void
+}
+
 export type State = {
   readonly event: EventEmitter
 
@@ -17,7 +21,13 @@ export type State = {
 
   readonly tabs: OpenTab[]
 
-  sync(location: History["location"], children: ReactChildren): void
+  readonly historyPromises: Map<string, HistoryPromiseSave>
+
+  update(location: History["location"], children: ReactChildren): void
+
+  updateLocation(location: History["location"]): void
+
+  setHistoryCallbackMap(fn: (map: Map<string, HistoryPromiseSave>) => Map<string, HistoryPromiseSave>): void
 
   setTabs(tabs: OpenTab[]): void
 
@@ -38,10 +48,11 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
   return create<State>((set, get) => ({
     event: new EventEmitter(),
     children,
-    history: history,
+    history,
     location: history.location,
     tabs: [],
-    sync: (location, children) =>
+    historyPromises: new Map(),
+    update: (location, children) =>
       set((state) => {
         const info = buildLocationInfo(location)
         const idx = state.findIndexByLocation(info.location)
@@ -64,12 +75,12 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
 
         return { location, children, tabs: state.tabs }
       }),
-    getSyncValue: () => {
-      const { location, children } = get()
-
-      return { location, children }
-    },
+    updateLocation: (location) => set({ location }),
     setTabs: (tabs) => set({ tabs }),
+    setHistoryCallbackMap: (fn) =>
+      set({
+        historyPromises: fn(get().historyPromises),
+      }),
     exist: (location) => {
       const { findByLocation } = get()
 

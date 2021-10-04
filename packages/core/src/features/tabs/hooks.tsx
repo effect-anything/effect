@@ -97,60 +97,44 @@ interface CloseMethodOptions {
 export const useTabs = () => {
   const { active, activeKey, activeIndex } = useTabActive()
 
-  const { event, history, tabs, setTabs, findByLocation, findByKey, findIndexByKey, findNext } = useStore((state) => ({
-    event: state.event,
+  const { event, setHistoryCallbackMap, setTabs, findByLocation, findByKey, findIndexByKey, findNext } = useStore(
+    (state) => ({
+      event: state.event,
+      setHistoryCallbackMap: state.setHistoryCallbackMap,
+      setTabs: state.setTabs,
+      findByLocation: state.findByLocation,
+      findByKey: state.findByKey,
+      findIndexByKey: state.findIndexByKey,
+      findNext: state.findNext,
+    })
+  )
+
+  const { history, tabs } = useStore((state) => ({
     history: state.history,
     tabs: state.tabs,
-    setTabs: state.setTabs,
-    findByLocation: state.findByLocation,
-    findByKey: state.findByKey,
-    findIndexByKey: state.findIndexByKey,
-    findNext: state.findNext,
   }))
 
-  const promisesRef = useRef(new Map())
-
-  useEffect(() => {
-    history.listen((location) => {
-      const id = JSON.stringify({
-        pathname: location.pathname,
-        state: location.state,
-        search: location.search,
-      })
-
-      const task = promisesRef.current.get(id)
-
-      if (task) {
-        task.resolve(location)
-
-        promisesRef.current.delete(id)
-      }
-    })
-  }, [history])
-
-  const historyChange = (path: LocationDescriptor, { replace, callback }: HistoryMethodOptions) => {
+  const historyChange = useEventCallback((path: LocationDescriptor, { replace, callback }: HistoryMethodOptions) => {
     let _resolve: (value: LocationDescriptor) => void = () => {}
-    let _reject: () => void = () => {}
 
-    // eslint-disable-next-line no-new
-    const promise = new Promise<LocationDescriptor>((resolve, reject) => {
+    const promise = new Promise<LocationDescriptor>((resolve) => {
       _resolve = resolve
-      _reject = reject
     })
 
-    promisesRef.current.set(
-      JSON.stringify(
-        typeof path === "string"
-          ? {
-              pathname: path,
-              state: undefined,
-              search: "",
-            }
-          : path
-      ),
-      { resolve: _resolve, reject: _reject }
-    )
-
+    setHistoryCallbackMap((map) => {
+      return map.set(
+        JSON.stringify(
+          typeof path === "string"
+            ? {
+                pathname: path,
+                state: undefined,
+                search: "",
+              }
+            : path
+        ),
+        { resolve: _resolve }
+      )
+    })
     promise.then((location) => {
       const currentTab = findByLocation(location)!
 
@@ -166,7 +150,7 @@ export const useTabs = () => {
     } else {
       history.push(path)
     }
-  }
+  })
 
   const switchTo = useEventCallback((tabKey: string, options: SwitchToMethodOptions = {}) => {
     const targetTab = findByKey(tabKey)
@@ -176,6 +160,7 @@ export const useTabs = () => {
     }
 
     if (activeKey === targetTab.tabKey) {
+      options.callback?.(targetTab)
       return
     }
 
@@ -264,6 +249,8 @@ export const useTabs = () => {
   })
 
   const reload = useEventCallback((tab: OpenTab | string, options: ReloadMethodOptions = { switch: true }) => {
+    const isSwitch = options.switch ?? true
+
     const reloadKey = (tab: OpenTab) => {
       const idx = findIndexByKey(tab.tabKey)
 
@@ -283,7 +270,7 @@ export const useTabs = () => {
     }
 
     if (tab && tab instanceof OpenTab) {
-      if (tab.tabKey !== activeKey) {
+      if (tab.tabKey !== activeKey && isSwitch) {
         switchTo(tab.tabKey, {
           callback: () => {
             reloadKey(tab)
@@ -301,7 +288,6 @@ export const useTabs = () => {
     }
 
     const reloadTab = tab ? findByKey(tab) || active : active
-    const isSwitch = options.switch ?? true
 
     if (reloadTab.tabKey !== activeKey && isSwitch) {
       switchTo(reloadTab.tabKey, {
@@ -420,22 +406,16 @@ export const useTabs = () => {
   )
 
   const closeRight = useEventCallback((tab: OpenTab, index: number, callback?: (tab: OpenTab) => void) => {
-    const start = R.max(index + 1, 0)
-    const count = R.max(1, tabs.length - index - 1)
+    switchTo(tab.tabKey, {
+      callback: () => {
+        const start = R.max(index + 1, 0)
+        const count = R.max(1, tabs.length - index - 1)
 
-    if (tab.tabKey !== activeKey) {
-      switchTo(tab.tabKey, {
-        callback: () => {
-          setTabs(R.remove(start, count, tabs))
+        setTabs(R.remove(start, count, tabs))
 
-          callback?.(tab)
-        },
-      })
-    } else {
-      setTabs(R.remove(start, count, tabs))
-
-      callback?.(tab)
-    }
+        callback?.(tab)
+      },
+    })
   })
 
   const closeOthers = useEventCallback((tab: OpenTab | undefined, callback?: (tab: OpenTab) => void) => {
@@ -443,7 +423,7 @@ export const useTabs = () => {
 
     switchTo(tabKey, {
       callback: (tab) => {
-        setTabs(R.reject(tabKeyEq(tabKey), tabs))
+        setTabs(R.filter(tabKeyEq(tabKey), tabs))
 
         callback?.(tab)
       },
