@@ -4,6 +4,23 @@ import * as R from "ramda"
 import create from "zustand"
 import { buildLocationInfo, OpenTab, ReactChildren } from "./openTab"
 
+export const locationId = (location: History["location"] | LocationDescriptor) => {
+  const isString = typeof location === "string"
+
+  return {
+    pathname: isString ? location : location.pathname,
+    search: isString ? "" : location.search || "",
+    state: isString ? undefined : location.state,
+  }
+}
+
+export const locationEquals = (
+  location: History["location"] | LocationDescriptor,
+  tabLocation: History["location"] | LocationDescriptor
+) => {
+  return R.equals(locationId(location), locationId(tabLocation))
+}
+
 export const tabKeyEq = R.propEq("tabKey")
 
 export type HistoryCallbackSave = (_: History["location"]) => void
@@ -17,13 +34,13 @@ export type State = {
 
   readonly tabs: OpenTab[]
 
-  readonly historyPromises: Map<string, HistoryCallbackSave[]>
+  readonly historyPromises: Map<string, HistoryCallbackSave>
 
   update(location: History["location"], children: ReactChildren): void
 
   updateLocation(location: History["location"]): void
 
-  setHistoryCallbackMap(fn: (map: Map<string, HistoryCallbackSave[]>) => Map<string, HistoryCallbackSave[]>): void
+  setHistoryCallbackMap(fn: (map: Map<string, HistoryCallbackSave>) => Map<string, HistoryCallbackSave>): void
 
   setTabs(tabs: OpenTab[]): void
 
@@ -37,7 +54,7 @@ export type State = {
 
   findIndexByKey(tabKey: string): number
 
-  findNext(tabKey?: string): OpenTab | undefined
+  findNext(tabKey?: string): OpenTab
 }
 
 export const createTabsStore = (history: History) => {
@@ -69,16 +86,12 @@ export const createTabsStore = (history: History) => {
         })
       }
 
-      const id = JSON.stringify({
-        pathname: location.pathname,
-        state: location.state || undefined,
-        search: location.search || "",
-      })
+      const id = JSON.stringify(locationId(location))
 
-      const resolves = historyPromises.get(id)
+      const resolve = historyPromises.get(id)
 
-      if (resolves && Array.isArray(resolves)) {
-        resolves.forEach((fn) => fn(location))
+      if (resolve) {
+        resolve(location)
 
         historyPromises.delete(id)
 
@@ -94,9 +107,9 @@ export const createTabsStore = (history: History) => {
         historyPromises: fn(get().historyPromises),
       }),
     exist: (location) => {
-      const { findByLocation } = get()
+      const { findIndexByLocation } = get()
 
-      return !!findByLocation(location)
+      return findIndexByLocation(location) !== -1
     },
     findByLocation: (location) => {
       const { tabs, findIndexByLocation } = get()
@@ -108,31 +121,7 @@ export const createTabsStore = (history: History) => {
     findIndexByLocation: (location) => {
       const { tabs } = get()
 
-      return R.findIndex((tab) => {
-        if (typeof location === "string") {
-          let fullPath = tab.location.pathname
-
-          if (tab.location.search) {
-            fullPath += tab.location.search
-          }
-
-          return fullPath === location
-        }
-
-        const pathLocation = {
-          pathname: location.pathname,
-          search: location.search || undefined,
-          state: undefined,
-        }
-
-        const tabLocation = {
-          pathname: tab.location.pathname,
-          search: tab.location.search || undefined,
-          state: undefined,
-        }
-
-        return R.equals(pathLocation, tabLocation)
-      }, tabs)
+      return R.findIndex((tab) => locationEquals(tab.location, location), tabs)
     },
     findByKey: (tabKey) => {
       const { tabs } = get()
@@ -148,12 +137,15 @@ export const createTabsStore = (history: History) => {
       const { tabs } = get()
 
       if (tabs.length === 1) {
-        return
+        return tabs[0]
       }
 
-      const removeIndex = R.findIndex(tabKeyEq(key), tabs)
+      const currentIndex = R.findIndex(tabKeyEq(key), tabs)
 
-      const nextIndex = removeIndex >= 1 ? removeIndex - 1 : removeIndex + 1
+      // last -> index -1
+      // middle -> index + 1
+      // head -> index +1
+      const nextIndex = currentIndex === tabs.length - 1 ? currentIndex - 1 : currentIndex + 1
 
       const nextTab = tabs[nextIndex]
 
