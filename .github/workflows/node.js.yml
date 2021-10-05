@@ -29,6 +29,8 @@ jobs:
         run: yarn
       - name: echo workspaces
         run: lerna list
+      - name: tsc build-util
+        run: cd bundler/build-util && yarn run build
       - name: lerna link
         run: lerna link
       - name: build builder

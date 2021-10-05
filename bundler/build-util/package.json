@@ -15,7 +15,7 @@
     "node": ">=14.15.0"
   },
   "bin": {
-    "build-util": "./lib/bin/index.js"
+    "build-util": "./bin/index.js"
   },
   "scripts": {
     "clean": "rimraf lib",
