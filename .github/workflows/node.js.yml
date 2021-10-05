@@ -38,4 +38,4 @@ jobs:
       - name: build packages
         run: yarn run build:pkg
       - name: jest test
-        run: yarn run jest --verbose --selectProjects core router auth
+        run: yarn run jest --verbose --runInBand --selectProjects core router auth
