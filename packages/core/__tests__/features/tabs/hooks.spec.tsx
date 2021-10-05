@@ -1,8 +1,8 @@
 import "@testing-library/jest-dom"
-import { createBrowserHistory, createHashHistory, History } from "history"
+import { createBrowserHistory, createHashHistory, createMemoryHistory, History } from "history"
 import React, { PropsWithChildren } from "react"
 import { renderHook, act } from "@testing-library/react-hooks"
-import { Router, Route } from "react-router-dom"
+import { Router, Route, Switch } from "react-router-dom"
 import { Provider as TabsProvider } from "../../../src/features/tabs/provider"
 import { useTabs, OpenTab } from "../../../src/features/tabs/hooks"
 
@@ -10,26 +10,60 @@ const wrapper = ({ history, children }: PropsWithChildren<{ history: History }>)
   return (
     <Router history={history}>
       <TabsProvider history={history} tabChildren={children}>
-        <Route path="/" />
+        <Switch>
+          <Route path="/" exact />
+          <Route path="/tab1" />
+          <Route path="/tab2" />
+          <Route path="/tab3" />
+        </Switch>
       </TabsProvider>
     </Router>
   )
 }
 
-let browserHistory = createBrowserHistory()
-let hashBrowser = createHashHistory()
+const historyModes = () => {
+  const browserHistory = createBrowserHistory({})
+  const memoryHistory = createMemoryHistory({})
+  const hashHistory = createHashHistory({
+    hashType: "hashbang",
+  })
+  // const slashHistory = createHashHistory({
+  //   hashType: "slash",
+  // })
+  // const noslashHistory = createHashHistory({
+  //   hashType: "noslash",
+  // })
 
-beforeEach(() => {
+  return [
+    {
+      name: "browser",
+      history: browserHistory,
+    },
+    {
+      name: "memory",
+      history: memoryHistory,
+    },
+    {
+      name: "hash",
+      history: hashHistory,
+    },
+    // {
+    //   name: "slash",
+    //   history: slashHistory,
+    // },
+    // {
+    //   name: "noslash",
+    //   history: noslashHistory,
+    // },
+  ]
+}
+
+afterEach(() => {
   window.history.pushState({}, "Test page", "/")
-
-  browserHistory = createBrowserHistory()
-  hashBrowser = createHashHistory()
 })
 
-describe("first test", () => {
-  it("sync history", () => {
-    const history = browserHistory
-
+describe.each(historyModes())("$name: browser location sync", ({ history }) => {
+  it("sync history ", () => {
     const { result } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -53,10 +87,10 @@ describe("first test", () => {
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.location.pathname).toEqual("/")
   })
+})
 
+describe.each(historyModes())("$name: .switchTo", ({ history }) => {
   it("switchTo", async () => {
-    const history = browserHistory
-
     const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -98,10 +132,10 @@ describe("first test", () => {
 
     expect(history.location.pathname).toEqual("/")
   })
+})
 
+describe.each(historyModes())("$name: .push", ({ history }) => {
   it("push exist location should work", async () => {
-    const history = browserHistory
-
     const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -145,8 +179,6 @@ describe("first test", () => {
   })
 
   it("push don't exist location should jump to new tab", async () => {
-    const history = browserHistory
-
     const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -184,18 +216,12 @@ describe("first test", () => {
   })
 })
 
-describe("push", () => {})
+describe.each(historyModes())("$name: .goBack", ({ history }) => {})
 
-describe("switchTo", () => {})
+describe.each(historyModes())("$name: .reload", ({ history }) => {})
 
-describe("goBack", () => {})
-
-describe("reload", () => {})
-
-describe("close", () => {
+describe.each(historyModes())("$name: .close", ({ history }) => {
   it("close current tab", async () => {
-    const history = browserHistory
-
     const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -233,3 +259,7 @@ describe("close", () => {
     expect(result.current.active.location.pathname).toEqual("/")
   })
 })
+
+describe.each(historyModes())("$name: .closeRight", ({ history }) => {})
+
+describe.each(historyModes())("$name: .closeOthers", ({ history }) => {})
