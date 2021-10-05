@@ -8,13 +8,13 @@ import { tabKeyEq, HistoryCallbackSave } from "./state"
 
 export { OpenTab }
 
-type ParamType<T> = T extends () => unknown ? never : T extends (...args: infer P) => unknown ? P : T
+type ParamType<T> = T extends (...args: infer P) => unknown ? P : T
 
 type Fn = (() => unknown) | ((...args: any) => unknown)
 
 function useEventCallback<
   T extends Fn,
-  F extends ParamType<T> extends never ? () => ReturnType<T> : (...args: ParamType<T>) => ReturnType<T>
+  F extends ParamType<T> extends [] ? () => ReturnType<T> : (...args: ParamType<T>) => ReturnType<T>
 >(fn: T, deps: ReadonlyArray<unknown> = []) {
   const ref = useRef<T>(fn)
 
@@ -299,90 +299,37 @@ export const useTabs = () => {
     }
   })
 
-  const close = useEventCallback(
-    (
-      tab: OpenTab | string | undefined,
-      options: CloseMethodOptions = {
-        reload: false,
-        replace: false,
-      }
-    ) => {
-      const closeTab = tab ? (tab instanceof OpenTab ? tab : findByKey(tab)) : active
-      const closeTabKey = closeTab?.tabKey
+  const close = useEventCallback((tab?: OpenTab | string, options: CloseMethodOptions = {}) => {
+    const closeTab = tab ? (tab instanceof OpenTab ? tab : findByKey(tab)) : active
+    const closeTabKey = closeTab?.tabKey
 
-      if (!closeTab || !closeTabKey) {
-        return
-      }
+    if (!closeTab || !closeTabKey) {
+      return
+    }
 
-      if (closeTabKey === activeKey) {
-        const backTo = options.backTo || findNext(closeTabKey)?.location
-
-        if (!backTo) {
-          return
-        }
-
-        if (backTo instanceof OpenTab) {
-          console.log(backTo.tabKey, closeTabKey, options)
-
-          switchTo(backTo.tabKey, {
-            replace: options.replace,
-            callback: (tab) => {
-              const cb = () => {
-                setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
-
-                options.callback?.(tab)
-              }
-
-              if (options.reload) {
-                reload(backTo, {
-                  callback: cb,
-                })
-              } else {
-                cb()
-              }
-            },
-          })
-        } else {
-          push(backTo, {
-            reload: options.reload,
-            replace: options.replace,
-            callback: (tab) => {
-              setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
-
-              options.callback?.(tab)
-            },
-          })
-        }
-
-        return
-      }
-
-      const backTo = options.backTo
+    if (closeTabKey === activeKey) {
+      const backTo = options.backTo || findNext(closeTabKey)?.location
 
       if (!backTo) {
-        setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
-
-        options.callback?.(active)
-
         return
       }
 
       if (backTo instanceof OpenTab) {
         switchTo(backTo.tabKey, {
           replace: options.replace,
-          callback: () => {
-            if (options.reload) {
-              reload(backTo, {
-                callback: () => {
-                  setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
-
-                  options.callback?.(backTo)
-                },
-              })
-            } else {
+          callback: (tab) => {
+            const cb = () => {
               setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
 
-              options.callback?.(backTo)
+              options.callback?.(tab)
+            }
+
+            if (options.reload) {
+              reload(backTo, {
+                callback: cb,
+              })
+            } else {
+              cb()
             }
           },
         })
@@ -397,8 +344,51 @@ export const useTabs = () => {
           },
         })
       }
+
+      return
     }
-  )
+
+    const backTo = options.backTo
+
+    if (!backTo) {
+      setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
+
+      options.callback?.(active)
+
+      return
+    }
+
+    if (backTo instanceof OpenTab) {
+      switchTo(backTo.tabKey, {
+        replace: options.replace,
+        callback: () => {
+          if (options.reload) {
+            reload(backTo, {
+              callback: () => {
+                setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
+
+                options.callback?.(backTo)
+              },
+            })
+          } else {
+            setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
+
+            options.callback?.(backTo)
+          }
+        },
+      })
+    } else {
+      push(backTo, {
+        reload: options.reload,
+        replace: options.replace,
+        callback: (tab) => {
+          setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
+
+          options.callback?.(tab)
+        },
+      })
+    }
+  })
 
   const closeRight = useEventCallback((tab: OpenTab, index: number, callback?: (tab: OpenTab) => void) => {
     switchTo(tab.tabKey, {
@@ -413,7 +403,7 @@ export const useTabs = () => {
     })
   })
 
-  const closeOthers = useEventCallback((tab: OpenTab | undefined, callback?: (tab: OpenTab) => void) => {
+  const closeOthers = useEventCallback((tab?: OpenTab, callback?: (tab: OpenTab) => void) => {
     const tabKey = tab?.tabKey ?? activeKey
 
     switchTo(tabKey, {

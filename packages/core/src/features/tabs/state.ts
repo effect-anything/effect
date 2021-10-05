@@ -17,13 +17,13 @@ export type State = {
 
   readonly tabs: OpenTab[]
 
-  readonly historyPromises: Map<string, HistoryCallbackSave>
+  readonly historyPromises: Map<string, HistoryCallbackSave[]>
 
   update(location: History["location"], children: ReactChildren): void
 
   updateLocation(location: History["location"]): void
 
-  setHistoryCallbackMap(fn: (map: Map<string, HistoryCallbackSave>) => Map<string, HistoryCallbackSave>): void
+  setHistoryCallbackMap(fn: (map: Map<string, HistoryCallbackSave[]>) => Map<string, HistoryCallbackSave[]>): void
 
   setTabs(tabs: OpenTab[]): void
 
@@ -71,14 +71,14 @@ export const createTabsStore = (history: History) => {
 
       const id = JSON.stringify({
         pathname: location.pathname,
-        state: location.state,
-        search: location.search,
+        state: location.state || undefined,
+        search: location.search || "",
       })
 
-      const resolve = historyPromises.get(id)
+      const resolves = historyPromises.get(id)
 
-      if (resolve) {
-        resolve(location)
+      if (resolves && Array.isArray(resolves)) {
+        resolves.forEach((fn) => fn(location))
 
         historyPromises.delete(id)
 

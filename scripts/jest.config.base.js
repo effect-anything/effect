@@ -15,7 +15,7 @@ module.exports = {
   ],
   moduleDirectories: ["node_modules"],
   modulePaths: ["node_modules"],
-  testMatch: ["!**/__fixtures__/**", "**/__tests__/**/*.(spec|test).[t]s?(x)"],
+  testMatch: ["!**/__fixtures__/**", "**/__tests__/**/*.(spec|test).[jt]s?(x)"],
   modulePathIgnorePatterns: [...ignored],
   testPathIgnorePatterns: [...ignored],
   transformIgnorePatterns: [...ignored],
@@ -25,9 +25,9 @@ module.exports = {
   collectCoverage: false,
   coverageDirectory: "coverage",
   collectCoverageFrom: [
-    "packages/**/src/**/*.ts",
-    "bundler/**/src/**/*.ts",
-    "plugins/**/src/**/*.ts",
+    "packages/**/src/**/*.[jt]s?(x)",
+    "bundler/**/src/**/*.[jt]s?(x)",
+    "plugins/**/src/**/*.[jt]s?(x)",
   ],
   setupFiles: [
     `<rootDir>/scripts/jest-polyfills.ts`,
