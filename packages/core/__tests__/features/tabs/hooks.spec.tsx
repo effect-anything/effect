@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom"
-import { createBrowserHistory, History } from "history"
+import { createBrowserHistory, createHashHistory, History } from "history"
 import React, { PropsWithChildren } from "react"
 import { renderHook, act } from "@testing-library/react-hooks"
 import { Router, Route } from "react-router-dom"
@@ -16,14 +16,20 @@ const wrapper = ({ history, children }: PropsWithChildren<{ history: History }>)
   )
 }
 
+let browserHistory = createBrowserHistory()
+let hashBrowser = createHashHistory()
+
+beforeEach(() => {
+  window.history.pushState({}, "Test page", "/")
+
+  browserHistory = createBrowserHistory()
+  hashBrowser = createHashHistory()
+})
+
 describe("first test", () => {
-  let history = createBrowserHistory()
-
-  beforeEach(() => {
-    history = createBrowserHistory()
-  })
-
   it("sync history", () => {
+    const history = browserHistory
+
     const { result } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -35,11 +41,11 @@ describe("first test", () => {
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.location.pathname).toEqual("/")
 
-    act(() => history.push("/tab"))
+    act(() => history.push("/tab1"))
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab")
+    expect(result.current.active.location.pathname).toEqual("/tab1")
 
     act(() => history.push("/"))
 
@@ -49,6 +55,8 @@ describe("first test", () => {
   })
 
   it("switchTo", async () => {
+    const history = browserHistory
+
     const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -92,6 +100,8 @@ describe("first test", () => {
   })
 
   it("push exist location should work", async () => {
+    const history = browserHistory
+
     const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -134,9 +144,58 @@ describe("first test", () => {
     expect(history.location.pathname).toEqual("/")
   })
 
-  it("push don't exist location should jump to new tab", () => {})
+  it("push don't exist location should jump to new tab", async () => {
+    const history = browserHistory
 
-  it("close tab", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history: history,
+      },
+    })
+
+    // tabs: [/], current: /
+
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    const pushCallbackFn = jest.fn((tab: OpenTab) => tab)
+
+    await act(async () => {
+      result.current.push("/tab1", {
+        callback: pushCallbackFn,
+      })
+
+      await waitForNextUpdate()
+    })
+
+    expect(pushCallbackFn).toHaveBeenCalled()
+    expect(pushCallbackFn).toHaveBeenCalledTimes(1)
+    expect(pushCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
+
+    // tabs: [/, tab1], current: tab1
+
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+
+    expect(history.location.pathname).toEqual("/tab1")
+  })
+})
+
+describe("push", () => {})
+
+describe("switchTo", () => {})
+
+describe("goBack", () => {})
+
+describe("reload", () => {})
+
+describe("close", () => {
+  it("close current tab", async () => {
+    const history = browserHistory
+
     const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -144,19 +203,27 @@ describe("first test", () => {
       },
     })
 
+    // tabs: [/], current: /
+
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.location.pathname).toEqual("/")
 
-    act(() => history.push("/tab"))
+    // tabs: [/, tab1], current: tab1
 
-    expect(result.current.activeIndex).toEqual(1)
+    act(() => history.push("/tab1"))
+
     expect(result.current.tabs).toHaveLength(2)
-    expect(result.current.active.location.pathname).toEqual("/tab")
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
 
-    // close current "tab"
+    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
+
+    // close current "tab1"
     await act(async () => {
-      result.current.close(result.current.active)
+      result.current.close(result.current.active, {
+        callback: closeCallbackFn,
+      })
 
       await waitForNextUpdate()
     })

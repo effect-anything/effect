@@ -42,11 +42,7 @@ const withChildren = (children: ReactNode): FunctionComponent => {
 
 export const getRandomKey = () => Math.ceil(Math.random() * 10000) + ""
 
-let id = 1
-
 export class OpenTab {
-  public id: number
-
   public tabKey: string
 
   public location: TabLocation
@@ -58,8 +54,6 @@ export class OpenTab {
   }>
 
   constructor({ tabKey, location, content }: OpenTabOptions) {
-    this.id = id++
-
     this.tabKey = tabKey + ""
 
     this.location = location

@@ -6,14 +6,10 @@ import { buildLocationInfo, OpenTab, ReactChildren } from "./openTab"
 
 export const tabKeyEq = R.propEq("tabKey")
 
-type HistoryPromiseSave = {
-  resolve: (_: History["location"]) => void
-}
+export type HistoryCallbackSave = (_: History["location"]) => void
 
 export type State = {
   readonly event: EventEmitter
-
-  readonly children: ReactChildren
 
   readonly history: History
 
@@ -21,13 +17,13 @@ export type State = {
 
   readonly tabs: OpenTab[]
 
-  readonly historyPromises: Map<string, HistoryPromiseSave>
+  readonly historyPromises: Map<string, HistoryCallbackSave>
 
   update(location: History["location"], children: ReactChildren): void
 
   updateLocation(location: History["location"]): void
 
-  setHistoryCallbackMap(fn: (map: Map<string, HistoryPromiseSave>) => Map<string, HistoryPromiseSave>): void
+  setHistoryCallbackMap(fn: (map: Map<string, HistoryCallbackSave>) => Map<string, HistoryCallbackSave>): void
 
   setTabs(tabs: OpenTab[]): void
 
@@ -44,37 +40,53 @@ export type State = {
   findNext(tabKey?: string): OpenTab | undefined
 }
 
-export const createTabsStore = (history: History, children: ReactChildren) => {
+export const createTabsStore = (history: History) => {
   return create<State>((set, get) => ({
     event: new EventEmitter(),
-    children,
     history,
     location: history.location,
     tabs: [],
     historyPromises: new Map(),
-    update: (location, children) =>
-      set((state) => {
-        const info = buildLocationInfo(location)
-        const idx = state.findIndexByLocation(info.location)
+    update: (location, children) => {
+      if (!location || !children) {
+        return
+      }
 
-        if (idx === -1) {
-          const newTab = new OpenTab({
-            tabKey: info.hash,
-            location: info.location,
-            content: children,
-          })
+      const { findIndexByLocation, historyPromises, tabs } = get()
 
-          const newTabs = R.append(newTab, state.tabs)
+      const info = buildLocationInfo(location)
+      const idx = findIndexByLocation(location)
 
-          return {
-            location,
-            children,
-            tabs: newTabs,
-          }
-        }
+      if (idx === -1) {
+        const newTab = new OpenTab({
+          tabKey: info.hash,
+          location: info.location,
+          content: children,
+        })
 
-        return { location, children, tabs: state.tabs }
-      }),
+        set({
+          tabs: R.append(newTab, tabs),
+        })
+      }
+
+      const id = JSON.stringify({
+        pathname: location.pathname,
+        state: location.state,
+        search: location.search,
+      })
+
+      const resolve = historyPromises.get(id)
+
+      if (resolve) {
+        resolve(location)
+
+        historyPromises.delete(id)
+
+        set({
+          historyPromises: historyPromises,
+        })
+      }
+    },
     updateLocation: (location) => set({ location }),
     setTabs: (tabs) => set({ tabs }),
     setHistoryCallbackMap: (fn) =>

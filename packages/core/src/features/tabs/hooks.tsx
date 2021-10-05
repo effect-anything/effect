@@ -4,7 +4,7 @@ import { EventEmitter } from "events"
 import { useRef, useEffect, useCallback } from "react"
 import { getRandomKey, OpenTab } from "./openTab"
 import { useStore } from "./context"
-import { tabKeyEq } from "./state"
+import { tabKeyEq, HistoryCallbackSave } from "./state"
 
 export { OpenTab }
 
@@ -115,11 +115,15 @@ export const useTabs = () => {
   }))
 
   const historyChange = useEventCallback((path: LocationDescriptor, { replace, callback }: HistoryMethodOptions) => {
-    let _resolve: (value: LocationDescriptor) => void = () => {}
+    const resolve: HistoryCallbackSave = (location) => {
+      const currentTab = findByLocation(location)!
 
-    const promise = new Promise<LocationDescriptor>((resolve) => {
-      _resolve = resolve
-    })
+      const name: string = replace ? "replace" : "push"
+
+      event.emit(name, currentTab)
+
+      callback?.(currentTab)
+    }
 
     setHistoryCallbackMap((map) => {
       return map.set(
@@ -132,17 +136,8 @@ export const useTabs = () => {
               }
             : path
         ),
-        { resolve: _resolve }
+        resolve
       )
-    })
-    promise.then((location) => {
-      const currentTab = findByLocation(location)!
-
-      const name: string = replace ? "replace" : "push"
-
-      event.emit(name, currentTab)
-
-      callback?.(currentTab)
     })
 
     if (replace) {
