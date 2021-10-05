@@ -17,7 +17,8 @@
     "build": "build-util build --configPath=../../scripts/bundler/pack.js",
     "build:watch": "build-util build --configPath=../../scripts/bundler/pack.js --watch",
     "lint": "eslint ./src",
-    "test": "jest"
+    "test": "jest --maxWorkers=50% --selectProjects stats-format-plugin",
+    "test:watch": "jest --maxWorkers=50% --watchAll --selectProjects stats-format-plugin"
   },
   "exports": {
     ".": {
