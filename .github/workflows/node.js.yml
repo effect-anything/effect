@@ -30,9 +30,5 @@ jobs:
       run: yarn
     - name: echo workspaces
       run: lerna list
-    - name: build bundler packages
-      run: yarn run build:bundler
-    - name: build packages
-      run: yarn run build:pkg
     - name: jest test
       run: yarn test
