@@ -4,5 +4,5 @@
     "noEmit": true,
     "target": "ES6"
   },
-  "include": ["src/**/*", "__tests__/**/*"]
+  "include": ["src", "__tests__"]
 }

@@ -8,5 +8,5 @@
     "declarationDir": "lib/_types",
     "types": ["@effect-x/deps/typings", "node"]
   },
-  "include": ["src/**/*"]
+  "include": ["src"]
 }

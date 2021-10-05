@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["@effect-x/deps/typings", "jest", "node"]
   },
-  "include": ["src/**/*", "__tests__/**/*"]
+  "include": ["src", "__tests__"]
 }

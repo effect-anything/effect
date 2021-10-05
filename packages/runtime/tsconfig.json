@@ -4,5 +4,5 @@
     "jsx": "react",
     "types": ["@effect-x/deps/typings", "jest"]
   },
-  "include": ["src/**/*", "__tests__/**/*", "./typings"]
+  "include": ["src", "__tests__", "./typings"]
 }
