@@ -64,7 +64,10 @@ export const locationId = (location: History["location"] | LocationDescriptor) =
   }
 }
 
-export const locationEquals = <T extends History["location"] | LocationDescriptor>(location: T, tabLocation: T) => {
+export const locationEquals = (
+  location: History["location"] | LocationDescriptor,
+  tabLocation: History["location"] | LocationDescriptor
+) => {
   return R.eqBy(locationId, location, tabLocation)
 }
 
@@ -168,11 +171,9 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
         historyPromises: fn(get().historyPromises),
       }),
     findByLocation: (location) => {
-      const { tabs, findIndexByLocation } = get()
+      const { tabs } = get()
 
-      const idx = findIndexByLocation(location)
-
-      return tabs[idx]
+      return R.find((tab) => locationEquals(tab.location, location), tabs)
     },
     findIndexByLocation: (location) => {
       const { tabs } = get()

@@ -5,7 +5,7 @@ import React, { PropsWithChildren } from "react"
 import { renderHook, act } from "@testing-library/react-hooks"
 import { Router, Route, Switch } from "react-router-dom"
 import { Provider as TabsProvider } from "../../../src/features/tabs/provider"
-import { useTabs, OpenTab } from "../../../src/features/tabs/hooks"
+import { useTabsAction, OpenTab } from "../../../src/features/tabs/hooks"
 
 const browserHistory = (options?: Parameters<typeof createBrowserHistory>) =>
   createBrowserHistory({
@@ -71,7 +71,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
   })
 
   it("history.push", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -100,7 +100,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
   })
 
   it("history.go", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -154,7 +154,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
   })
 
   it("history.goBack", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -185,7 +185,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
   })
 
   it("history.goForward", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -236,7 +236,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
   })
 
   it("switch", async () => {
-    const { result } = renderHook(() => useTabs(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -268,7 +268,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
   })
 
   it("switch#callback", async () => {
-    const { result } = renderHook(() => useTabs(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -308,7 +308,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
   })
 
   it("switch to tab that does not exist", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -339,7 +339,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
   })
 
   it("switching to the same tab", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -382,7 +382,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
   })
 
   it("push", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -413,7 +413,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
   })
 
   it("push exist location should work#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -452,7 +452,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
   })
 
   it("push exist location#reload", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -496,7 +496,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
   })
 
   it("push exist location#replace", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -528,7 +528,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
   })
 
   it("push a non-existent location should open a new tab", () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -571,7 +571,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("backTo", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -608,7 +608,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("first tab, goBack", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -631,7 +631,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("backTo#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -677,7 +677,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("backTo#reload", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -729,7 +729,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("include backTo OpenTab parameter", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -774,7 +774,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("include backTo string parameter", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -820,7 +820,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("include backTo not found", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -871,7 +871,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
   })
 
   it("reload", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -910,7 +910,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
   })
 
   it("reload#tab does exist", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -948,7 +948,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
   })
 
   it("reload#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1007,7 +1007,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
   it("reload#replace", async () => {})
 
   it("reload#switch=false", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1075,7 +1075,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close current tab", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1110,7 +1110,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close first tab", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1149,7 +1149,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close#tab does not exist", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1191,7 +1191,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1234,7 +1234,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close#backTo", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1277,7 +1277,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close#backTo2", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1320,7 +1320,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close#backTo3", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1376,7 +1376,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
   })
 
   it("close right", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1418,7 +1418,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
   })
 
   it("close right#tab", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1462,7 +1462,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
   })
 
   it("close right#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1523,7 +1523,7 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
   })
 
   it("close others", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1565,7 +1565,7 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
   })
 
   it("close others#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
