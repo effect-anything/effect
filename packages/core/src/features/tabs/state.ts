@@ -230,7 +230,7 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
       return tabs[index]
     },
     historyChange: (path: LocationDescriptor, { replace, callback }: HistoryChangeMethodOptions) => {
-      const { event, findByLocation, setHistoryCallbackMap } = get()
+      const { event, location, findByLocation, setHistoryCallbackMap } = get()
 
       const resolve: HistoryCallbackSave = (location) => {
         const currentTab = findByLocation(location)!
@@ -241,8 +241,8 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
         callback?.(currentTab)
       }
 
-      if (locationEquals(path, history.location)) {
-        resolve(history.location)
+      if (locationEquals(path, location)) {
+        resolve(location)
 
         return
       }
