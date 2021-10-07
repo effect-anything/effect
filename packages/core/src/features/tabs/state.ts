@@ -60,15 +60,12 @@ export const locationId = (location: History["location"] | LocationDescriptor) =
   return {
     pathname: isString ? location : location.pathname,
     search: isString ? "" : location.search || "",
-    state: isString ? undefined : location.state,
+    state: isString ? {} : location.state || {},
   }
 }
 
-export const locationEquals = (
-  location: History["location"] | LocationDescriptor,
-  tabLocation: History["location"] | LocationDescriptor
-) => {
-  return R.equals(locationId(location), locationId(tabLocation))
+export const locationEquals = <T extends History["location"] | LocationDescriptor>(location: T, tabLocation: T) => {
+  return R.eqBy(locationId, location, tabLocation)
 }
 
 export const tabKeyEq = R.propEq("tabKey")
@@ -214,7 +211,7 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
       const newLocation = {
         pathname: location.pathname,
         search: location.search ? decodeURIComponent(location.search) : "",
-        state: typeof location.state === "undefined" ? {} : location.state,
+        state: typeof location.state === "undefined" ? {} : location.state || {},
       }
 
       const hashStr = hash(JSON.stringify(newLocation))
