@@ -61,7 +61,7 @@ const wrapper = ({ history, children }: PropsWithChildren<{ history: History }>)
   )
 }
 
-describe.each(historyModes)("$name: browser location sync", ({ factory }) => {
+describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ factory }) => {
   let history: History
 
   beforeEach(() => {
@@ -308,7 +308,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
   })
 
   it("switch to tab that does not exist", async () => {
-    const { result } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
         history,
@@ -339,7 +339,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
   })
 
   it("switching to the same tab", async () => {
-    const { result } = renderHook(() => useTabs(), {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
         history,
@@ -353,10 +353,12 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
 
     const switchToCallbackFn = jest.fn((tab: OpenTab) => tab)
 
-    act(() => {
+    await act(async () => {
       result.current.switchTo(result.current.tabs[0].tabKey, {
         callback: switchToCallbackFn,
       })
+
+      await waitForNextUpdate()
     })
 
     expect(switchToCallbackFn).toHaveBeenCalled()
@@ -603,6 +605,29 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     expect(result.current.tabs).toHaveLength(3)
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.location.pathname).toEqual("/tab1")
+  })
+
+  it("first tab, goBack", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history: history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      result.current.goBack()
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
   })
 
   it("backTo#callback", async () => {
@@ -1082,6 +1107,45 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.location.pathname).toEqual("/")
+  })
+
+  it("close first tab", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+
+    act(() => {
+      history.push("/")
+    })
+
+    // default close current "tab1"
+    await act(async () => {
+      result.current.close()
+
+      await waitForNextUpdate()
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
   })
 
   it("close#tab does not exist", async () => {

@@ -6,10 +6,9 @@ import { createTabsStore } from "./state"
 
 export const TabsSync: FunctionComponent<{ history: History }> = ({ history, children }) => {
   const location = useStore((state) => state.location)
-  const { update, updateLocation, setHistoryPromises } = useStore((state) => ({
+  const { update, updateLocation } = useStore((state) => ({
     update: state.update,
     updateLocation: state.updateLocation,
-    setHistoryPromises: state.setHistoryCallbackMap,
   }))
 
   useEffect(() => {
@@ -20,7 +19,7 @@ export const TabsSync: FunctionComponent<{ history: History }> = ({ history, chi
     const unSubscribe = history.listen((location) => updateLocation(location))
 
     return () => unSubscribe()
-  }, [history, setHistoryPromises, updateLocation])
+  }, [history, updateLocation])
 
   return null
 }
@@ -31,7 +30,7 @@ export const Provider: FunctionComponent<{ history: History; tabChildren?: React
   children,
 }) => {
   return (
-    <TabsZustandProvider createStore={() => createTabsStore(history)}>
+    <TabsZustandProvider createStore={() => createTabsStore(history, children)}>
       <TabsSync history={history}>{children}</TabsSync>
       {tabChildren}
     </TabsZustandProvider>
