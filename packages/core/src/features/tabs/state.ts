@@ -2,7 +2,9 @@ import { EventEmitter } from "events"
 import type { History, LocationDescriptor } from "history"
 import * as R from "ramda"
 import create from "zustand"
-import { buildLocationInfo, OpenTab, ReactChildren } from "./openTab"
+import { LocationTabInfo, OpenTab, ReactChildren } from "./openTab"
+// @ts-expect-error
+import hash from "hash-string"
 
 export const locationId = (location: History["location"] | LocationDescriptor) => {
   const isString = typeof location === "string"
@@ -44,8 +46,6 @@ export type State = {
 
   setTabs(tabs: OpenTab[]): void
 
-  exist(location: LocationDescriptor): boolean
-
   findByLocation(location: LocationDescriptor): OpenTab | undefined
 
   findIndexByLocation(location: LocationDescriptor): number
@@ -55,6 +55,8 @@ export type State = {
   findIndexByKey(tabKey: string): number
 
   findNext(tabKey?: string): OpenTab
+
+  buildLocationInfo(location: History["location"]): LocationTabInfo
 }
 
 export const createTabsStore = (history: History) => {
@@ -65,11 +67,7 @@ export const createTabsStore = (history: History) => {
     tabs: [],
     historyPromises: new Map(),
     update: (location, children) => {
-      if (!location || !children) {
-        return
-      }
-
-      const { findIndexByLocation, historyPromises, tabs } = get()
+      const { historyPromises, tabs, findIndexByLocation, buildLocationInfo } = get()
 
       const info = buildLocationInfo(location)
       const idx = findIndexByLocation(location)
@@ -106,11 +104,6 @@ export const createTabsStore = (history: History) => {
       set({
         historyPromises: fn(get().historyPromises),
       }),
-    exist: (location) => {
-      const { findIndexByLocation } = get()
-
-      return findIndexByLocation(location) !== -1
-    },
     findByLocation: (location) => {
       const { tabs, findIndexByLocation } = get()
 
@@ -151,5 +144,19 @@ export const createTabsStore = (history: History) => {
 
       return nextTab
     },
+    buildLocationInfo: R.memoizeWith(JSON.stringify, (location: History["location"]): LocationTabInfo => {
+      const newLocation = {
+        pathname: location.pathname,
+        search: location.search ? decodeURIComponent(location.search) : "",
+        state: typeof location.state !== "undefined" ? location.state : undefined,
+      }
+
+      const hashStr = hash(JSON.stringify(newLocation))
+
+      return {
+        hash: hashStr,
+        location: newLocation,
+      }
+    }),
   }))
 }

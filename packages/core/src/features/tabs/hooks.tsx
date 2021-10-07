@@ -1,6 +1,5 @@
 import type { LocationDescriptor } from "history"
 import * as R from "ramda"
-import { EventEmitter } from "events"
 import { useRef, useEffect, useCallback } from "react"
 import { getRandomKey, OpenTab } from "./openTab"
 import { useStore } from "./context"
@@ -53,12 +52,6 @@ export const useTabActive = () => {
   }
 }
 
-export const useTabEvent = (): EventEmitter => {
-  const event = useStore((state) => state.event)
-
-  return event
-}
-
 interface HistoryMethodOptions {
   replace?: boolean
   callback?: (tab: OpenTab) => void
@@ -94,6 +87,16 @@ interface CloseMethodOptions {
   backTo?: OpenTab | LocationDescriptor
   reload?: boolean
   replace?: boolean
+  callback?: (tab: OpenTab) => void
+}
+
+interface CloseRightMethodOptions {
+  tab?: OpenTab
+  callback?: (tab: OpenTab) => void
+}
+
+interface CloseOthersMethodOptions {
+  tab?: OpenTab
   callback?: (tab: OpenTab) => void
 }
 
@@ -137,6 +140,7 @@ export const useTabs = () => {
     const id = JSON.stringify(locationId(path))
 
     setHistoryCallbackMap((map) => map.set(id, resolve))
+
     if (replace) {
       history.replace(path)
     } else {
@@ -291,27 +295,30 @@ export const useTabs = () => {
     })
   })
 
-  const closeRight = useEventCallback((tab: OpenTab, index: number, callback?: (tab: OpenTab) => void) => {
+  const closeRight = useEventCallback((options: CloseRightMethodOptions = {}) => {
+    const tab = options.tab || active
+    const index = findIndexByKey(tab.tabKey)
+
+    const start = R.max(index + 1, 0)
+    const count = R.max(1, tabs.length - index - 1)
+
     switchTo(tab.tabKey, {
       callback: () => {
-        const start = R.max(index + 1, 0)
-        const count = R.max(1, tabs.length - index - 1)
-
         setTabs(R.remove(start, count, tabs))
 
-        callback?.(tab)
+        options.callback?.(tab)
       },
     })
   })
 
-  const closeOthers = useEventCallback((tab?: OpenTab, callback?: (tab: OpenTab) => void) => {
-    const tabKey = tab?.tabKey ?? activeKey
+  const closeOthers = useEventCallback((options: CloseOthersMethodOptions = {}) => {
+    const tab = options.tab || active
 
-    switchTo(tabKey, {
+    switchTo(tab.tabKey, {
       callback: (tab) => {
-        setTabs(R.filter(tabKeyEq(tabKey), tabs))
+        setTabs(R.filter(tabKeyEq(tab.tabKey), tabs))
 
-        callback?.(tab)
+        options.callback?.(tab)
       },
     })
   })

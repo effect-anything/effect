@@ -1,8 +1,5 @@
 import type { History } from "history"
 import { FunctionComponent, ReactNode, cloneElement, isValidElement } from "react"
-// @ts-expect-error
-import hash from "hash-string"
-import * as R from "ramda"
 
 export type ReactChildren = ReactNode | undefined
 
@@ -67,18 +64,3 @@ export class OpenTab {
     }
   }
 }
-
-export const buildLocationInfo = R.memoizeWith(JSON.stringify, (location: History["location"]): LocationTabInfo => {
-  const newLocation = {
-    pathname: location.pathname,
-    search: location.search ? decodeURIComponent(location.search) : "",
-    state: typeof location.state !== "undefined" ? location.state : undefined,
-  }
-
-  const hashStr = hash(JSON.stringify(newLocation))
-
-  return {
-    hash: hashStr,
-    location: newLocation,
-  }
-})

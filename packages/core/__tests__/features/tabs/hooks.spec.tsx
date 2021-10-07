@@ -22,12 +22,6 @@ const hashHistory = (options?: Parameters<typeof createHashHistory>) =>
     hashType: "hashbang",
     ...options,
   })
-// const slashHistory = createHashHistory({
-//   hashType: "slash",
-// })
-// const noslashHistory = createHashHistory({
-//   hashType: "noslash",
-// })
 
 const historyModes = [
   {
@@ -241,7 +235,39 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     history = factory()
   })
 
-  it("switch to the tabs that exist", async () => {
+  it("switch", async () => {
+    const { result } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+
+    act(() => {
+      result.current.switchTo(result.current.tabs[0].tabKey)
+    })
+
+    // tabs: [/, tab1], current: /
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+  })
+
+  it("switch#callback", async () => {
     const { result } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -353,7 +379,38 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     history = factory()
   })
 
-  it("push exist location should work", async () => {
+  it("push", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+
+    act(() => {
+      result.current.push("/")
+    })
+
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+  })
+
+  it("push exist location should work#callback", async () => {
     const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -827,6 +884,44 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     expect(result.current.active.location.pathname).toEqual("/tab1")
   })
 
+  it("reload#tab does exist", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history: history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+
+    const prevTabs = result.current.tabs
+
+    act(() => {
+      result.current.reload({
+        tab: "FAKE_TAB_KEY",
+      })
+    })
+
+    expect(prevTabs === result.current.tabs)
+
+    // tabs: [/, tab1, tab2], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+  })
+
   it("reload#callback", async () => {
     const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
@@ -943,8 +1038,6 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.location.pathname).toEqual("/")
   })
-
-  it("reload not exists", async () => {})
 })
 
 describe.each(historyModes)("$name: .close", ({ factory }) => {
@@ -956,7 +1049,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     history = factory()
   })
 
-  it("close", async () => {
+  it("close current tab", async () => {
     const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
       wrapper,
       initialProps: {
@@ -978,7 +1071,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.location.pathname).toEqual("/tab1")
 
-    // close current "tab1"
+    // default close current "tab1"
     await act(async () => {
       result.current.close()
 
@@ -989,6 +1082,48 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.location.pathname).toEqual("/")
+  })
+
+  it("close#tab does not exist", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+
+    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
+
+    // close /
+    act(() => {
+      result.current.close({
+        tab: "FAKE_TAB_KEY",
+        callback: closeCallbackFn,
+      })
+    })
+
+    expect(closeCallbackFn).toHaveBeenCalled()
+    expect(closeCallbackFn).toHaveBeenCalledTimes(1)
+    expect(closeCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
   })
 
   it("close#callback", async () => {
@@ -1077,6 +1212,93 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     expect(result.current.active.location.pathname).toEqual("/")
   })
 
+  it("close#backTo2", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+
+    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
+
+    await act(async () => {
+      result.current.close({
+        backTo: "NOT_FOUND",
+        callback: closeCallbackFn,
+      })
+
+      await waitForNextUpdate()
+    })
+
+    expect(closeCallbackFn).toHaveBeenCalled()
+    expect(closeCallbackFn).toHaveBeenCalledTimes(1)
+    expect(closeCallbackFn).toHaveBeenCalledWith(result.current.tabs[0])
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+  })
+
+  it("close#backTo3", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+
+    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
+
+    // close /
+    await act(async () => {
+      result.current.close({
+        tab: result.current.tabs[0],
+        callback: closeCallbackFn,
+      })
+
+      await waitForNextUpdate()
+    })
+
+    expect(closeCallbackFn).toHaveBeenCalled()
+    expect(closeCallbackFn).toHaveBeenCalledTimes(1)
+    expect(closeCallbackFn).toHaveBeenCalledWith(result.current.tabs[0])
+
+    // tabs: [tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+  })
+
   it("close#replace", async () => {})
 })
 
@@ -1089,7 +1311,142 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     history = factory()
   })
 
-  it("asd", () => {})
+  it("close right", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history: history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    act(() => {
+      history.push("/tab2")
+    })
+
+    act(() => {
+      history.push("/tab3")
+    })
+
+    // tabs: [/, tab1, tab2, tab3], current: tab3
+    expect(result.current.tabs).toHaveLength(4)
+    expect(result.current.activeIndex).toEqual(3)
+    expect(result.current.active.location.pathname).toEqual("/tab3")
+
+    await act(async () => {
+      result.current.closeRight()
+
+      await waitForNextUpdate()
+    })
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(4)
+    expect(result.current.activeIndex).toEqual(3)
+    expect(result.current.active.location.pathname).toEqual("/tab3")
+  })
+
+  it("close right#tab", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history: history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    act(() => {
+      history.push("/tab2")
+    })
+
+    act(() => {
+      history.push("/tab3")
+    })
+
+    // tabs: [/, tab1, tab2, tab3], current: tab3
+    expect(result.current.tabs).toHaveLength(4)
+    expect(result.current.activeIndex).toEqual(3)
+    expect(result.current.active.location.pathname).toEqual("/tab3")
+
+    await act(async () => {
+      result.current.closeRight({
+        tab: result.current.tabs[1],
+      })
+
+      await waitForNextUpdate()
+    })
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+  })
+
+  it("close right#callback", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history: history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    act(() => {
+      history.push("/tab2")
+    })
+
+    act(() => {
+      history.push("/tab3")
+    })
+
+    // tabs: [/, tab1, tab2, tab3], current: tab3
+    expect(result.current.tabs).toHaveLength(4)
+    expect(result.current.activeIndex).toEqual(3)
+    expect(result.current.active.location.pathname).toEqual("/tab3")
+
+    const closeRightCallback = jest.fn((tab: OpenTab) => tab)
+
+    await act(async () => {
+      result.current.closeRight({
+        tab: result.current.tabs[1],
+        callback: closeRightCallback,
+      })
+
+      await waitForNextUpdate()
+    })
+
+    expect(closeRightCallback).toHaveBeenCalled()
+    expect(closeRightCallback).toHaveBeenCalledTimes(1)
+    expect(closeRightCallback).toHaveBeenCalledWith(result.current.tabs[1])
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+  })
 })
 
 describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
@@ -1101,5 +1458,96 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
     history = factory()
   })
 
-  it("asd", () => {})
+  it("close others", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history: history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    act(() => {
+      history.push("/tab2")
+    })
+
+    act(() => {
+      history.push("/tab3")
+    })
+
+    // tabs: [/, tab1, tab2, tab3], current: tab3
+    expect(result.current.tabs).toHaveLength(4)
+    expect(result.current.activeIndex).toEqual(3)
+    expect(result.current.active.location.pathname).toEqual("/tab3")
+
+    await act(async () => {
+      result.current.closeOthers()
+
+      await waitForNextUpdate()
+    })
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/tab3")
+  })
+
+  it("close others#callback", async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useTabs(), {
+      wrapper,
+      initialProps: {
+        history: history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.location.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    act(() => {
+      history.push("/tab2")
+    })
+
+    act(() => {
+      history.push("/tab3")
+    })
+
+    // tabs: [/, tab1, tab2, tab3], current: tab3
+    expect(result.current.tabs).toHaveLength(4)
+    expect(result.current.activeIndex).toEqual(3)
+    expect(result.current.active.location.pathname).toEqual("/tab3")
+
+    const closeRightCallback = jest.fn((tab: OpenTab) => tab)
+
+    await act(async () => {
+      result.current.closeRight({
+        tab: result.current.tabs[1],
+        callback: closeRightCallback,
+      })
+
+      await waitForNextUpdate()
+    })
+
+    expect(closeRightCallback).toHaveBeenCalled()
+    expect(closeRightCallback).toHaveBeenCalledTimes(1)
+    expect(closeRightCallback).toHaveBeenCalledWith(result.current.tabs[1])
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.location.pathname).toEqual("/tab1")
+  })
 })
