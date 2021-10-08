@@ -1,25 +1,7 @@
-import type { History } from "history"
 import { FunctionComponent, ReactNode, cloneElement, isValidElement } from "react"
+import { TabLocation } from "./types"
 
 export type ReactChildren = ReactNode | undefined
-
-export type TabLocation = Omit<History["location"], "hash" | "key">
-
-export interface LocationTabInfo {
-  hash: string
-  location: TabLocation
-}
-
-interface ITabProperties {
-  title: string
-  key: string
-}
-
-interface OpenTabOptions {
-  tabKey: string
-  location: TabLocation
-  content: ReactChildren
-}
 
 const withChildren = (children: ReactNode): FunctionComponent => {
   const displayName = "TabChildren"
@@ -39,23 +21,34 @@ const withChildren = (children: ReactNode): FunctionComponent => {
 
 export const getRandomKey = () => Math.ceil(Math.random() * 10000) + ""
 
+interface ITabProperties {
+  title: string
+  key: string
+}
+
+interface OpenTabOptions {
+  tabKey: string
+  identity: TabLocation
+  component: ReactChildren
+}
+
 export class OpenTab {
   public tabKey: string
 
-  public location: TabLocation
+  public identity: TabLocation
 
   public properties: ITabProperties
 
-  public content: FunctionComponent<{
+  public component: FunctionComponent<{
     location: TabLocation
   }>
 
-  constructor({ tabKey, location, content }: OpenTabOptions) {
+  constructor({ tabKey, identity, component }: OpenTabOptions) {
     this.tabKey = tabKey + ""
 
-    this.location = location
+    this.identity = identity
 
-    this.content = withChildren(content)
+    this.component = withChildren(component)
 
     this.properties = {
       key: getRandomKey(),

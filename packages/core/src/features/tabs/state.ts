@@ -1,10 +1,11 @@
 import { EventEmitter } from "events"
-import type { History, LocationDescriptor } from "history"
 import * as R from "ramda"
 import create from "zustand"
-import { getRandomKey, LocationTabInfo, OpenTab, ReactChildren } from "./openTab"
+import { getRandomKey, OpenTab, ReactChildren } from "./openTab"
 // @ts-expect-error
 import hash from "hash-string"
+import { HistoryCallbackSave, JumpTabLocation, TabLocation, TabsAdapter } from "./types"
+import { adapter as ReactRouterAdapter } from "./adapters/react-router"
 
 export interface HistoryChangeMethodOptions {
   replace?: boolean
@@ -30,7 +31,7 @@ export interface ReloadMethodOptions {
 }
 
 export interface BackToMethodOptions {
-  backTo?: OpenTab | LocationDescriptor
+  backTo?: OpenTab | JumpTabLocation
   reload?: boolean
   replace?: boolean
   callback?: (tab: OpenTab) => void
@@ -38,7 +39,7 @@ export interface BackToMethodOptions {
 
 export interface CloseMethodOptions {
   tab?: OpenTab | string
-  backTo?: OpenTab | LocationDescriptor
+  backTo?: OpenTab | JumpTabLocation
   reload?: boolean
   replace?: boolean
   callback?: (tab: OpenTab) => void
@@ -54,7 +55,7 @@ export interface CloseOthersMethodOptions {
   callback?: (tab: OpenTab) => void
 }
 
-export const locationId = (location: History["location"] | LocationDescriptor) => {
+export const locationId = (location: JumpTabLocation | TabLocation) => {
   const isString = typeof location === "string"
 
   return {
@@ -64,39 +65,32 @@ export const locationId = (location: History["location"] | LocationDescriptor) =
   }
 }
 
-export const locationEquals = (
-  location: History["location"] | LocationDescriptor,
-  tabLocation: History["location"] | LocationDescriptor
-) => {
+export const locationEquals = (location: JumpTabLocation | TabLocation, tabLocation: JumpTabLocation | TabLocation) => {
   return R.eqBy(locationId, location, tabLocation)
 }
 
 export const tabKeyEq = R.propEq("tabKey")
 
-export type HistoryCallbackSave = (_: History["location"]) => void
-
 export type State = {
   readonly event: EventEmitter
 
-  readonly history: History
-
-  readonly location: History["location"]
+  readonly location: TabLocation
 
   readonly tabs: OpenTab[]
 
-  readonly historyPromises: Map<string, HistoryCallbackSave>
+  readonly historyChangeCallback: HistoryCallbackSave | null
 
-  update(location: History["location"], children: ReactChildren): void
+  readonly adapter: ReturnType<TabsAdapter>
 
-  updateLocation(location: History["location"]): void
+  update(location: TabLocation, children: ReactChildren): void
 
-  setHistoryCallbackMap(fn: (map: Map<string, HistoryCallbackSave>) => Map<string, HistoryCallbackSave>): void
+  updateLocation(location: TabLocation): void
 
   setTabs(tabs: OpenTab[]): void
 
-  findByLocation(location: LocationDescriptor): OpenTab | undefined
+  findByLocation(location: TabLocation | JumpTabLocation): OpenTab | undefined
 
-  findIndexByLocation(location: LocationDescriptor): number
+  findIndexByLocation(location: TabLocation): number
 
   findByKey(tabKey: string): OpenTab | undefined
 
@@ -104,13 +98,11 @@ export type State = {
 
   findNext(tabKey?: string): OpenTab | undefined
 
-  buildLocationInfo(location: History["location"]): LocationTabInfo
-
   findActive(): OpenTab
 
-  historyChange(path: LocationDescriptor, options: HistoryChangeMethodOptions): void
+  onChange(path: JumpTabLocation, options: HistoryChangeMethodOptions): void
 
-  push(path: LocationDescriptor, options?: PushMethodOptions): void
+  push(path: JumpTabLocation, options?: PushMethodOptions): void
 
   switchTo(tabKey: string, options?: SwitchToMethodOptions): void
 
@@ -125,24 +117,65 @@ export type State = {
   closeOthers(options?: CloseOthersMethodOptions): void
 }
 
-export const createTabsStore = (history: History, children: ReactChildren) => {
-  const store = create<State>((set, get) => ({
-    event: new EventEmitter(),
-    history,
-    location: history.location,
-    tabs: [],
-    historyPromises: new Map(),
-    update: (location, children) => {
-      const { historyPromises, tabs, findIndexByLocation, buildLocationInfo } = get()
+interface TabsStoreOptions {
+  adapter?: TabsAdapter
+}
 
-      const info = buildLocationInfo(location)
+export const createTabsStore = (
+  children: ReactChildren,
+  { adapter = ReactRouterAdapter, ...rest }: TabsStoreOptions
+) => {
+  const event = new EventEmitter()
+  const adapterApi = adapter({
+    ...rest,
+    event,
+  })
+
+  const initialLocation = adapterApi.identity()
+
+  const buildLocationInfo = R.memoizeWith(JSON.stringify, (location: TabLocation) => {
+    const newLocation = {
+      pathname: location.pathname,
+      search: location.search ? decodeURIComponent(location.search) : "",
+      state: typeof location.state === "undefined" ? {} : location.state || {},
+      hash: location.hash ? location.hash : "",
+    }
+
+    const hashStr = hash(JSON.stringify(newLocation))
+
+    return {
+      hash: hashStr,
+      location: newLocation,
+    }
+  })
+
+  const initialTabInfo = buildLocationInfo(initialLocation)
+  const initialTabs = [
+    new OpenTab({
+      tabKey: initialTabInfo.hash,
+      identity: initialTabInfo.location,
+      component: children,
+    }),
+  ]
+
+  const store = create<State>((set, get) => ({
+    event,
+    adapter: adapterApi,
+    location: initialLocation,
+    tabs: initialTabs,
+    historyChangeCallback: null,
+    update: (location, children) => {
+      const { historyChangeCallback, tabs, findIndexByLocation } = get()
+
       const idx = findIndexByLocation(location)
 
       if (idx === -1) {
+        const info = buildLocationInfo(location)
+
         const newTab = new OpenTab({
           tabKey: info.hash,
-          location: info.location,
-          content: children,
+          identity: info.location,
+          component: children,
         })
 
         set({
@@ -150,35 +183,25 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
         })
       }
 
-      const id = JSON.stringify(locationId(location))
-
-      const resolve = historyPromises.get(id)
-
-      if (resolve) {
-        resolve(location)
-
-        historyPromises.delete(id)
+      if (historyChangeCallback) {
+        historyChangeCallback(location)
 
         set({
-          historyPromises: historyPromises,
+          historyChangeCallback: null,
         })
       }
     },
     updateLocation: (location) => set({ location }),
     setTabs: (tabs) => set({ tabs }),
-    setHistoryCallbackMap: (fn) =>
-      set({
-        historyPromises: fn(get().historyPromises),
-      }),
     findByLocation: (location) => {
       const { tabs } = get()
 
-      return R.find((tab) => locationEquals(tab.location, location), tabs)
+      return R.find((tab) => locationEquals(tab.identity, location), tabs)
     },
     findIndexByLocation: (location) => {
       const { tabs } = get()
 
-      return R.findIndex((tab) => locationEquals(tab.location, location), tabs)
+      return R.findIndex((tab) => locationEquals(tab.identity, location), tabs)
     },
     findByKey: (tabKey) => {
       const { tabs } = get()
@@ -208,20 +231,6 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
 
       return nextTab
     },
-    buildLocationInfo: R.memoizeWith(JSON.stringify, (location: History["location"]): LocationTabInfo => {
-      const newLocation = {
-        pathname: location.pathname,
-        search: location.search ? decodeURIComponent(location.search) : "",
-        state: typeof location.state === "undefined" ? {} : location.state || {},
-      }
-
-      const hashStr = hash(JSON.stringify(newLocation))
-
-      return {
-        hash: hashStr,
-        location: newLocation,
-      }
-    }),
     findActive() {
       const { tabs, findIndexByLocation, location } = get()
 
@@ -229,8 +238,8 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
 
       return tabs[index]
     },
-    historyChange: (path: LocationDescriptor, { replace, callback }: HistoryChangeMethodOptions) => {
-      const { event, location, findByLocation, setHistoryCallbackMap } = get()
+    onChange: (path, { replace, callback }) => {
+      const { event, adapter, location, findByLocation } = get()
 
       const resolve: HistoryCallbackSave = (location) => {
         const currentTab = findByLocation(location)!
@@ -247,18 +256,18 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
         return
       }
 
-      const id = JSON.stringify(locationId(path))
-
-      setHistoryCallbackMap((map) => map.set(id, resolve))
+      set({
+        historyChangeCallback: resolve,
+      })
 
       if (replace) {
-        history.replace(path)
+        adapter.replace(path)
       } else {
-        history.push(path)
+        adapter.push(path)
       }
     },
-    push: (path: LocationDescriptor, options: PushMethodOptions = {}) => {
-      const { findByLocation, findIndexByKey, historyChange, setTabs, tabs } = get()
+    push: (path, options = {}) => {
+      const { findByLocation, findIndexByKey, onChange, setTabs, tabs } = get()
 
       const existTab = findByLocation(path)
 
@@ -266,46 +275,44 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
         if (typeof path !== "string") {
           const idx = findIndexByKey(existTab.tabKey)
 
-          existTab.location.state = path.state
-          existTab.location.search = path.search || ""
+          existTab.identity.state = path.state || {}
+          existTab.identity.search = path.search || ""
 
           setTabs(R.update(idx, existTab, tabs))
         }
 
-        const target = {
-          state: existTab.location.state,
-          pathname: existTab.location.pathname,
-          search: existTab.location.search,
-        }
-
-        historyChange(target, { replace: options.replace, callback: options.callback })
+        onChange(existTab.identity, {
+          replace: options.replace,
+          callback: options.callback,
+        })
       } else {
-        historyChange(path, {
+        onChange(path, {
           replace: options.replace,
           callback: options.callback,
         })
       }
     },
-    switchTo: (tabKey: string, options: SwitchToMethodOptions = {}) => {
+    switchTo: (tabKey, options = {}) => {
       const { findActive, findByKey, push } = get()
 
-      const active = findActive()
       const targetTab = findByKey(tabKey)
 
       if (!targetTab) {
+        const active = findActive()
+
         // TODO: callback
         options.callback?.(active)
 
         return
       }
 
-      push(targetTab.location, {
+      push(targetTab.identity, {
         reload: options.reload,
         replace: options.replace,
         callback: options.callback,
       })
     },
-    goBack: (options: BackToMethodOptions = {}) => {
+    goBack: (options = {}) => {
       const { findActive, findByLocation, findNext, push, reload } = get()
 
       const active = findActive()
@@ -323,7 +330,7 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
         return
       }
 
-      push(nextTab.location, {
+      push(nextTab.identity, {
         replace: options.replace,
         callback: () => {
           if (options.reload) {
@@ -337,7 +344,7 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
         },
       })
     },
-    reload: (options: ReloadMethodOptions = {}) => {
+    reload: (options = {}) => {
       const { event, findActive, tabs, setTabs, findByKey, findIndexByKey, push } = get()
 
       const active = findActive()
@@ -364,7 +371,7 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
       }
 
       if (reloadTab.tabKey !== active.tabKey && isSwitch) {
-        push(reloadTab.location, {
+        push(reloadTab.identity, {
           replace: options.replace,
           callback: () => {
             reloadKey(reloadTab)
@@ -376,7 +383,7 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
 
       reloadKey(reloadTab)
     },
-    close: (options: CloseMethodOptions = {}) => {
+    close: (options = {}) => {
       const { findActive, tabs, setTabs, findByKey, findNext, goBack } = get()
 
       const active = findActive()
@@ -411,7 +418,7 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
         },
       })
     },
-    closeRight: (options: CloseRightMethodOptions = {}) => {
+    closeRight: (options = {}) => {
       const { findActive, tabs, setTabs, findIndexByKey, switchTo } = get()
 
       const active = findActive()
@@ -429,7 +436,7 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
         },
       })
     },
-    closeOthers: (options: CloseOthersMethodOptions = {}) => {
+    closeOthers: (options = {}) => {
       const { findActive, tabs, setTabs, switchTo } = get()
 
       const active = findActive()
@@ -444,8 +451,6 @@ export const createTabsStore = (history: History, children: ReactChildren) => {
       })
     },
   }))
-
-  store.getState().update(history.location, children)
 
   return store
 }

@@ -5,7 +5,7 @@ import React, { PropsWithChildren } from "react"
 import { renderHook, act } from "@testing-library/react-hooks"
 import { Router, Route, Switch } from "react-router-dom"
 import { Provider as TabsProvider } from "../../../src/features/tabs/provider"
-import { useTabsAction, OpenTab } from "../../../src/features/tabs/hooks"
+import { useTabsAction } from "../../../src/features/tabs/hooks"
 
 const browserHistory = (options?: Parameters<typeof createBrowserHistory>) =>
   createBrowserHistory({
@@ -49,7 +49,7 @@ const historyModes = [
 const wrapper = ({ history, children }: PropsWithChildren<{ history: History }>) => {
   return (
     <Router history={history}>
-      <TabsProvider history={history} tabChildren={children}>
+      <TabsProvider tabChildren={children} history={history}>
         <Switch>
           <Route path="/" exact />
           <Route path="/tab1" />
@@ -80,7 +80,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -88,7 +88,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     act(() => {
       history.push("/")
@@ -96,7 +96,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("history.go", async () => {
@@ -109,7 +109,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -126,7 +126,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
     // [/, tab1, tab2, tab3]
     expect(result.current.tabs).toHaveLength(4)
     expect(result.current.activeIndex).toEqual(3)
-    expect(result.current.active.location.pathname).toEqual("/tab3")
+    expect(result.current.active.identity.pathname).toEqual("/tab3")
 
     // [/, tab1, tab2, tab3]
     // go -1 tab2
@@ -138,7 +138,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(4)
     expect(result.current.activeIndex).toEqual(2)
-    expect(result.current.active.location.pathname).toEqual("/tab2")
+    expect(result.current.active.identity.pathname).toEqual("/tab2")
 
     // [/, tab1, tab2, tab3]
     // go 1
@@ -150,7 +150,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(4)
     expect(result.current.activeIndex).toEqual(3)
-    expect(result.current.active.location.pathname).toEqual("/tab3")
+    expect(result.current.active.identity.pathname).toEqual("/tab3")
   })
 
   it("history.goBack", async () => {
@@ -163,7 +163,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -171,7 +171,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     await act(async () => {
       history.goBack()
@@ -181,7 +181,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("history.goForward", async () => {
@@ -194,7 +194,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -202,7 +202,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     await act(async () => {
       history.goBack()
@@ -212,7 +212,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     await act(async () => {
       history.goForward()
@@ -222,7 +222,7 @@ describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ facto
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 })
 
@@ -246,7 +246,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -255,7 +255,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     act(() => {
       result.current.switchTo(result.current.tabs[0].tabKey)
@@ -264,7 +264,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     // tabs: [/, tab1], current: /
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("switch#callback", async () => {
@@ -278,7 +278,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -287,9 +287,9 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const switchToCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const switchToCallbackFn = jest.fn((tab) => tab)
 
     act(() => {
       result.current.switchTo(result.current.tabs[0].tabKey, {
@@ -304,7 +304,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     // tabs: [/, tab1], current: /
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("switch to tab that does not exist", async () => {
@@ -318,9 +318,9 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
-    const switchToCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const switchToCallbackFn = jest.fn((tab) => tab)
 
     act(() => {
       result.current.switchTo("NOT_FOUND_KEY", {
@@ -335,7 +335,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("switching to the same tab", async () => {
@@ -349,9 +349,9 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
-    const switchToCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const switchToCallbackFn = jest.fn((tab) => tab)
 
     await act(async () => {
       result.current.switchTo(result.current.tabs[0].tabKey, {
@@ -368,7 +368,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 })
 
@@ -392,7 +392,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -401,7 +401,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     act(() => {
       result.current.push("/")
@@ -409,7 +409,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("push exist location should work#callback", async () => {
@@ -423,7 +423,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -432,9 +432,9 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const pushCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const pushCallbackFn = jest.fn((tab) => tab)
 
     act(() => {
       result.current.push("/", {
@@ -448,7 +448,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("push exist location#reload", async () => {
@@ -462,7 +462,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -471,11 +471,11 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     const prevKey = result.current.tabs[1].properties.key
 
-    const pushCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const pushCallbackFn = jest.fn((tab) => tab)
 
     act(() => {
       result.current.push("/tab1", {
@@ -492,7 +492,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("push exist location#replace", async () => {
@@ -506,9 +506,9 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
-    const pushCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const pushCallbackFn = jest.fn((tab) => tab)
 
     act(() => {
       result.current.push("/tab1", {
@@ -524,7 +524,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("push a non-existent location should open a new tab", () => {
@@ -539,9 +539,9 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
 
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
-    const pushCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const pushCallbackFn = jest.fn((tab) => tab)
 
     act(() => {
       result.current.push("/tab1", {
@@ -557,7 +557,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 })
 
@@ -581,7 +581,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -593,7 +593,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab2
     expect(result.current.tabs).toHaveLength(3)
     expect(result.current.activeIndex).toEqual(2)
-    expect(result.current.active.location.pathname).toEqual("/tab2")
+    expect(result.current.active.identity.pathname).toEqual("/tab2")
 
     await act(async () => {
       result.current.goBack()
@@ -604,7 +604,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(3)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("first tab, goBack", async () => {
@@ -618,7 +618,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       result.current.goBack()
@@ -627,7 +627,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("backTo#callback", async () => {
@@ -641,7 +641,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -654,9 +654,9 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab2
     expect(result.current.tabs).toHaveLength(3)
     expect(result.current.activeIndex).toEqual(2)
-    expect(result.current.active.location.pathname).toEqual("/tab2")
+    expect(result.current.active.identity.pathname).toEqual("/tab2")
 
-    const goBackCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const goBackCallbackFn = jest.fn((tab) => tab)
 
     await act(async () => {
       result.current.goBack({
@@ -673,7 +673,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(3)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("backTo#reload", async () => {
@@ -687,7 +687,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -699,9 +699,9 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab2
     expect(result.current.tabs).toHaveLength(3)
     expect(result.current.activeIndex).toEqual(2)
-    expect(result.current.active.location.pathname).toEqual("/tab2")
+    expect(result.current.active.identity.pathname).toEqual("/tab2")
 
-    const goBackCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const goBackCallbackFn = jest.fn((tab) => tab)
 
     // tab1 -> tabKey
     const prevKey = result.current.tabs[1].tabKey
@@ -725,7 +725,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(3)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("include backTo OpenTab parameter", async () => {
@@ -739,7 +739,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -751,9 +751,9 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab2
     expect(result.current.tabs).toHaveLength(3)
     expect(result.current.activeIndex).toEqual(2)
-    expect(result.current.active.location.pathname).toEqual("/tab2")
+    expect(result.current.active.identity.pathname).toEqual("/tab2")
 
-    const goBackCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const goBackCallbackFn = jest.fn((tab) => tab)
 
     await act(async () => {
       result.current.goBack({
@@ -784,7 +784,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -796,9 +796,9 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab2
     expect(result.current.tabs).toHaveLength(3)
     expect(result.current.activeIndex).toEqual(2)
-    expect(result.current.active.location.pathname).toEqual("/tab2")
+    expect(result.current.active.identity.pathname).toEqual("/tab2")
 
-    const goBackCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const goBackCallbackFn = jest.fn((tab) => tab)
 
     await act(async () => {
       result.current.goBack({
@@ -816,7 +816,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(3)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("include backTo not found", async () => {
@@ -830,7 +830,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -839,9 +839,9 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const goBackCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const goBackCallbackFn = jest.fn((tab) => tab)
 
     act(() => {
       result.current.goBack({
@@ -857,7 +857,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 })
 
@@ -881,7 +881,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -890,7 +890,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     // tab1 -> tabKey
     const prevKey = result.current.tabs[1].tabKey
@@ -906,7 +906,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("reload#tab does exist", async () => {
@@ -920,7 +920,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -929,7 +929,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     const prevTabs = result.current.tabs
 
@@ -944,7 +944,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("reload#callback", async () => {
@@ -958,7 +958,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -967,7 +967,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     act(() => {
       history.push("/")
@@ -976,9 +976,9 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/, tab1], current: /
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
-    const reloadCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const reloadCallbackFn = jest.fn((tab) => tab)
 
     // tab1 -> tabKey
     const prevKey = result.current.tabs[1].tabKey
@@ -1001,7 +1001,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("reload#replace", async () => {})
@@ -1017,7 +1017,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1026,7 +1026,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     act(() => {
       history.push("/")
@@ -1035,9 +1035,9 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/, tab1], current: /
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
-    const reloadCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const reloadCallbackFn = jest.fn((tab) => tab)
 
     // tab1 -> tabKey
     const prevKey = result.current.tabs[1].tabKey
@@ -1061,7 +1061,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     // tabs: [/, tab1, tab2], current: /
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 })
 
@@ -1085,7 +1085,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1094,7 +1094,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     // default close current "tab1"
     await act(async () => {
@@ -1106,7 +1106,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("close first tab", async () => {
@@ -1120,7 +1120,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1129,7 +1129,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
     act(() => {
       history.push("/")
@@ -1145,7 +1145,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("close#tab does not exist", async () => {
@@ -1159,7 +1159,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1168,9 +1168,9 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const closeCallbackFn = jest.fn((tab) => tab)
 
     // close /
     act(() => {
@@ -1187,7 +1187,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("close#callback", async () => {
@@ -1201,7 +1201,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1210,9 +1210,9 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const closeCallbackFn = jest.fn((tab) => tab)
 
     // close current "tab1"
     await act(async () => {
@@ -1230,7 +1230,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("close#backTo", async () => {
@@ -1244,7 +1244,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1253,9 +1253,9 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const closeCallbackFn = jest.fn((tab) => tab)
 
     // close current "tab1"
     await act(async () => {
@@ -1273,7 +1273,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("close#backTo2", async () => {
@@ -1287,7 +1287,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1296,9 +1296,9 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const closeCallbackFn = jest.fn((tab) => tab)
 
     await act(async () => {
       result.current.close({
@@ -1316,7 +1316,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
   })
 
   it("close#backTo3", async () => {
@@ -1330,7 +1330,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1339,9 +1339,9 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const closeCallbackFn = jest.fn((tab) => tab)
 
     // close /
     await act(async () => {
@@ -1360,7 +1360,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     // tabs: [tab1], current: tab1
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("close#replace", async () => {})
@@ -1386,7 +1386,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1403,7 +1403,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     // tabs: [/, tab1, tab2, tab3], current: tab3
     expect(result.current.tabs).toHaveLength(4)
     expect(result.current.activeIndex).toEqual(3)
-    expect(result.current.active.location.pathname).toEqual("/tab3")
+    expect(result.current.active.identity.pathname).toEqual("/tab3")
 
     await act(async () => {
       result.current.closeRight()
@@ -1414,7 +1414,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(4)
     expect(result.current.activeIndex).toEqual(3)
-    expect(result.current.active.location.pathname).toEqual("/tab3")
+    expect(result.current.active.identity.pathname).toEqual("/tab3")
   })
 
   it("close right#tab", async () => {
@@ -1428,7 +1428,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1445,7 +1445,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     // tabs: [/, tab1, tab2, tab3], current: tab3
     expect(result.current.tabs).toHaveLength(4)
     expect(result.current.activeIndex).toEqual(3)
-    expect(result.current.active.location.pathname).toEqual("/tab3")
+    expect(result.current.active.identity.pathname).toEqual("/tab3")
 
     await act(async () => {
       result.current.closeRight({
@@ -1458,7 +1458,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("close right#callback", async () => {
@@ -1472,7 +1472,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1489,9 +1489,9 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     // tabs: [/, tab1, tab2, tab3], current: tab3
     expect(result.current.tabs).toHaveLength(4)
     expect(result.current.activeIndex).toEqual(3)
-    expect(result.current.active.location.pathname).toEqual("/tab3")
+    expect(result.current.active.identity.pathname).toEqual("/tab3")
 
-    const closeRightCallback = jest.fn((tab: OpenTab) => tab)
+    const closeRightCallback = jest.fn((tab) => tab)
 
     await act(async () => {
       result.current.closeRight({
@@ -1509,7 +1509,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 })
 
@@ -1533,7 +1533,7 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1550,7 +1550,7 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
     // tabs: [/, tab1, tab2, tab3], current: tab3
     expect(result.current.tabs).toHaveLength(4)
     expect(result.current.activeIndex).toEqual(3)
-    expect(result.current.active.location.pathname).toEqual("/tab3")
+    expect(result.current.active.identity.pathname).toEqual("/tab3")
 
     await act(async () => {
       result.current.closeOthers()
@@ -1561,7 +1561,7 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/tab3")
+    expect(result.current.active.identity.pathname).toEqual("/tab3")
   })
 
   it("close others#callback", async () => {
@@ -1575,7 +1575,7 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
     expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.location.pathname).toEqual("/")
+    expect(result.current.active.identity.pathname).toEqual("/")
 
     act(() => {
       history.push("/tab1")
@@ -1592,9 +1592,9 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
     // tabs: [/, tab1, tab2, tab3], current: tab3
     expect(result.current.tabs).toHaveLength(4)
     expect(result.current.activeIndex).toEqual(3)
-    expect(result.current.active.location.pathname).toEqual("/tab3")
+    expect(result.current.active.identity.pathname).toEqual("/tab3")
 
-    const closeRightCallback = jest.fn((tab: OpenTab) => tab)
+    const closeRightCallback = jest.fn((tab) => tab)
 
     await act(async () => {
       result.current.closeRight({
@@ -1612,6 +1612,6 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.location.pathname).toEqual("/tab1")
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 })

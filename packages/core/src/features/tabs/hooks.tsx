@@ -1,5 +1,6 @@
+import React from "react"
 import { useStore } from "./context"
-import { TabLocation } from "./openTab"
+import { TabLocation } from "./types"
 import { CloseMethodOptions, CloseRightMethodOptions, ReloadMethodOptions } from "./state"
 
 export const useTabActive = () => {
@@ -23,13 +24,11 @@ export const useTabActive = () => {
 export interface TabItem {
   index: number
 
-  key: string
-
   tabKey: string
 
-  location: TabLocation
+  identity: TabLocation
 
-  component: any
+  getComponent: () => JSX.Element
 
   properties: Record<string, any>
 
@@ -64,10 +63,9 @@ export const useTabs = () => {
       return {
         index: index,
         tabKey: tab.tabKey,
-        key: tab.properties.key,
         properties: tab.properties,
-        component: tab.content,
-        location: tab.location,
+        getComponent: () => <tab.component key={tab.properties.key} location={tab.identity} />,
+        identity: tab.identity,
         isHead,
         isLast,
         reload: (options?: Omit<ReloadMethodOptions, "tab">) => reload({ ...options, tab }),
