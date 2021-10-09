@@ -1,13 +1,13 @@
 import { EventEmitter } from "events"
 import * as R from "ramda"
 import create from "zustand"
-import { getRandomKey, OpenTab, ReactChildren } from "./openTab"
+import { getRandomKey, OpenTab, ReactChildren, tabKeyEq } from "./openTab"
 // @ts-expect-error
 import hash from "hash-string"
-import { HistoryCallbackSave, JumpTabLocation, TabLocation, TabsAdapter } from "./types"
+import { HistoryCallbackSave, JumpTabIdentity, TabIdentity, TabKey, TabsAdapter } from "./types"
 import { adapter as ReactRouterAdapter } from "./adapters/react-router"
 
-export interface HistoryChangeMethodOptions {
+export interface OnChangeMethodOptions {
   replace?: boolean
   callback?: (tab: OpenTab) => void
 }
@@ -24,22 +24,22 @@ export interface SwitchToMethodOptions {
 }
 
 export interface ReloadMethodOptions {
-  tab?: OpenTab | string
+  tab?: OpenTab | TabKey
   switch?: boolean
   replace?: boolean
   callback?: (tab: OpenTab) => void
 }
 
 export interface BackToMethodOptions {
-  backTo?: OpenTab | JumpTabLocation
+  backTo?: OpenTab | JumpTabIdentity
   reload?: boolean
   replace?: boolean
   callback?: (tab: OpenTab) => void
 }
 
 export interface CloseMethodOptions {
-  tab?: OpenTab | string
-  backTo?: OpenTab | JumpTabLocation
+  tab?: OpenTab | TabKey
+  backTo?: OpenTab | JumpTabIdentity
   reload?: boolean
   replace?: boolean
   callback?: (tab: OpenTab) => void
@@ -55,26 +55,10 @@ export interface CloseOthersMethodOptions {
   callback?: (tab: OpenTab) => void
 }
 
-export const locationId = (location: JumpTabLocation | TabLocation) => {
-  const isString = typeof location === "string"
-
-  return {
-    pathname: isString ? location : location.pathname,
-    search: isString ? "" : location.search || "",
-    state: isString ? {} : location.state || {},
-  }
-}
-
-export const locationEquals = (location: JumpTabLocation | TabLocation, tabLocation: JumpTabLocation | TabLocation) => {
-  return R.eqBy(locationId, location, tabLocation)
-}
-
-export const tabKeyEq = R.propEq("tabKey")
-
 export type State = {
   readonly event: EventEmitter
 
-  readonly location: TabLocation
+  readonly identity: TabIdentity
 
   readonly tabs: OpenTab[]
 
@@ -82,29 +66,27 @@ export type State = {
 
   readonly adapter: ReturnType<TabsAdapter>
 
-  update(location: TabLocation, children: ReactChildren): void
+  update(identity: TabIdentity, children: ReactChildren): void
 
-  updateLocation(location: TabLocation): void
+  updateIdentity(identity: TabIdentity): void
 
-  setTabs(tabs: OpenTab[]): void
+  findByIdentity(identity: TabIdentity): OpenTab | undefined
 
-  findByLocation(location: TabLocation | JumpTabLocation): OpenTab | undefined
+  findIndexByIdentity(identity: TabIdentity): number
 
-  findIndexByLocation(location: TabLocation): number
+  findByKey(tabKey: TabKey): OpenTab | undefined
 
-  findByKey(tabKey: string): OpenTab | undefined
+  findIndexByKey(tabKey: TabKey): number
 
-  findIndexByKey(tabKey: string): number
-
-  findNext(tabKey?: string): OpenTab | undefined
+  findNext(tabKey: TabKey): OpenTab | undefined
 
   findActive(): OpenTab
 
-  onChange(path: JumpTabLocation, options: HistoryChangeMethodOptions): void
+  onChange(path: TabIdentity, options: OnChangeMethodOptions): void
 
-  push(path: JumpTabLocation, options?: PushMethodOptions): void
+  push(path: TabIdentity | JumpTabIdentity, options?: PushMethodOptions): void
 
-  switchTo(tabKey: string, options?: SwitchToMethodOptions): void
+  switchTo(tabKey: TabKey, options?: SwitchToMethodOptions): void
 
   goBack(options?: BackToMethodOptions): void
 
@@ -121,6 +103,15 @@ interface TabsStoreOptions {
   adapter?: TabsAdapter
 }
 
+const buildIdentityInfo = (id: TabIdentity) => {
+  const hashStr = hash(JSON.stringify(id))
+
+  return {
+    hash: hashStr + "",
+    identity: id,
+  }
+}
+
 export const createTabsStore = (
   children: ReactChildren,
   { adapter = ReactRouterAdapter, ...rest }: TabsStoreOptions
@@ -131,29 +122,16 @@ export const createTabsStore = (
     event,
   })
 
-  const initialLocation = adapterApi.identity()
+  const initialIdentity = adapterApi.identity()
 
-  const buildLocationInfo = R.memoizeWith(JSON.stringify, (location: TabLocation) => {
-    const newLocation = {
-      pathname: location.pathname,
-      search: location.search ? decodeURIComponent(location.search) : "",
-      state: typeof location.state === "undefined" ? {} : location.state || {},
-      hash: location.hash ? location.hash : "",
-    }
+  const buildIdentityInfoMemoize = R.memoizeWith(JSON.stringify, buildIdentityInfo)
 
-    const hashStr = hash(JSON.stringify(newLocation))
+  const initialTabInfo = buildIdentityInfoMemoize(initialIdentity)
 
-    return {
-      hash: hashStr,
-      location: newLocation,
-    }
-  })
-
-  const initialTabInfo = buildLocationInfo(initialLocation)
   const initialTabs = [
     new OpenTab({
       tabKey: initialTabInfo.hash,
-      identity: initialTabInfo.location,
+      identity: initialTabInfo.identity,
       component: children,
     }),
   ]
@@ -161,20 +139,41 @@ export const createTabsStore = (
   const store = create<State>((set, get) => ({
     event,
     adapter: adapterApi,
-    location: initialLocation,
+    identity: initialIdentity,
     tabs: initialTabs,
     historyChangeCallback: null,
-    update: (location, children) => {
-      const { historyChangeCallback, tabs, findIndexByLocation } = get()
+    update: (identity, children) => {
+      const { historyChangeCallback, tabs, findIndexByIdentity } = get()
 
-      const idx = findIndexByLocation(location)
+      const exist = adapterApi.exist(tabs, identity)
 
-      if (idx === -1) {
-        const info = buildLocationInfo(location)
+      if (exist) {
+        const index = findIndexByIdentity(identity)
+
+        set({
+          tabs: R.adjust(
+            index,
+            (tab) => {
+              if (!R.equals(tab.identity, identity)) {
+                const { hash } = buildIdentityInfoMemoize(identity)
+
+                tab.identity.state = identity.state
+                tab.identity.search = identity.search
+                tab.identity.hash = identity.hash
+                tab.tabKey = hash
+              }
+
+              return tab
+            },
+            tabs
+          ),
+        })
+      } else {
+        const info = buildIdentityInfoMemoize(identity)
 
         const newTab = new OpenTab({
           tabKey: info.hash,
-          identity: info.location,
+          identity: info.identity,
           component: children,
         })
 
@@ -184,24 +183,23 @@ export const createTabsStore = (
       }
 
       if (historyChangeCallback) {
-        historyChangeCallback(location)
+        historyChangeCallback(identity)
 
         set({
           historyChangeCallback: null,
         })
       }
     },
-    updateLocation: (location) => set({ location }),
-    setTabs: (tabs) => set({ tabs }),
-    findByLocation: (location) => {
-      const { tabs } = get()
+    updateIdentity: (identity) => set({ identity: identity }),
+    findByIdentity: (identity) => {
+      const { tabs, adapter } = get()
 
-      return R.find((tab) => locationEquals(tab.identity, location), tabs)
+      return R.find((tab) => adapter.equal(tab.identity, identity), tabs)
     },
-    findIndexByLocation: (location) => {
-      const { tabs } = get()
+    findIndexByIdentity: (identity) => {
+      const { tabs, adapter } = get()
 
-      return R.findIndex((tab) => locationEquals(tab.identity, location), tabs)
+      return R.findIndex((tab) => adapter.equal(tab.identity, identity), tabs)
     },
     findByKey: (tabKey) => {
       const { tabs } = get()
@@ -213,14 +211,14 @@ export const createTabsStore = (
 
       return R.findIndex(tabKeyEq(tabKey), tabs)
     },
-    findNext: (key) => {
+    findNext: (tabKey) => {
       const { tabs } = get()
 
       if (tabs.length === 1) {
         return
       }
 
-      const currentIndex = R.findIndex(tabKeyEq(key), tabs)
+      const currentIndex = R.findIndex(tabKeyEq(tabKey), tabs)
 
       // last -> index -1
       // middle -> index + 1
@@ -232,26 +230,24 @@ export const createTabsStore = (
       return nextTab
     },
     findActive() {
-      const { tabs, findIndexByLocation, location } = get()
+      const { identity, findByIdentity } = get()
 
-      const index = findIndexByLocation(location)
-
-      return tabs[index]
+      return findByIdentity(identity)!
     },
-    onChange: (path, { replace, callback }) => {
-      const { event, adapter, location, findByLocation } = get()
+    onChange: (changeTabIdentity, { replace, callback }) => {
+      const { event, adapter, identity, findByIdentity } = get()
 
-      const resolve: HistoryCallbackSave = (location) => {
-        const currentTab = findByLocation(location)!
-        const name: string = replace ? "replace" : "push"
+      const resolve: HistoryCallbackSave = (identity) => {
+        const currentTab = findByIdentity(identity)!
+        const name = replace ? "replace" : "push"
 
         event.emit(name, currentTab)
 
         callback?.(currentTab)
       }
 
-      if (locationEquals(path, location)) {
-        resolve(location)
+      if (R.equals(changeTabIdentity, identity)) {
+        resolve(identity)
 
         return
       }
@@ -261,24 +257,27 @@ export const createTabsStore = (
       })
 
       if (replace) {
-        adapter.replace(path)
+        adapter.replace(changeTabIdentity)
       } else {
-        adapter.push(path)
+        adapter.push(changeTabIdentity)
       }
     },
-    push: (path, options = {}) => {
-      const { findByLocation, findIndexByKey, onChange, setTabs, tabs } = get()
+    push: (pushIdentity, options = {}) => {
+      const { findByIdentity, findIndexByKey, onChange, tabs, adapter } = get()
 
-      const existTab = findByLocation(path)
+      const identity = adapter.getIdentity(pushIdentity)
+
+      const existTab = findByIdentity(identity)
 
       if (existTab) {
-        if (typeof path !== "string") {
-          const idx = findIndexByKey(existTab.tabKey)
+        if (!R.equals(existTab.identity, identity)) {
+          const index = findIndexByKey(existTab.tabKey)
 
-          existTab.identity.state = path.state || {}
-          existTab.identity.search = path.search || ""
+          existTab.identity.state = identity.state
+          existTab.identity.search = identity.search
+          existTab.identity.hash = identity.hash
 
-          setTabs(R.update(idx, existTab, tabs))
+          set({ tabs: R.update(index, existTab, tabs) })
         }
 
         onChange(existTab.identity, {
@@ -286,7 +285,7 @@ export const createTabsStore = (
           callback: options.callback,
         })
       } else {
-        onChange(path, {
+        onChange(identity, {
           replace: options.replace,
           callback: options.callback,
         })
@@ -313,14 +312,14 @@ export const createTabsStore = (
       })
     },
     goBack: (options = {}) => {
-      const { findActive, findByLocation, findNext, push, reload } = get()
+      const { findActive, findByIdentity, findNext, push, reload } = get()
 
       const active = findActive()
       const nextTab =
         options.backTo instanceof OpenTab
           ? options.backTo
           : options.backTo
-          ? findByLocation(options.backTo)
+          ? findByIdentity(adapterApi.getIdentity(options.backTo))
           : findNext(active.tabKey)
 
       if (!nextTab) {
@@ -345,7 +344,7 @@ export const createTabsStore = (
       })
     },
     reload: (options = {}) => {
-      const { event, findActive, tabs, setTabs, findByKey, findIndexByKey, push } = get()
+      const { event, findActive, tabs, findByKey, findIndexByKey, switchTo } = get()
 
       const active = findActive()
       const reloadTab = options.tab instanceof OpenTab ? options.tab : options.tab ? findByKey(options.tab) : active
@@ -363,7 +362,7 @@ export const createTabsStore = (
         const idx = findIndexByKey(tab.tabKey)
         const newTab = R.assocPath(["properties", "key"], getRandomKey(), tabs[idx])
 
-        setTabs(R.update(idx, newTab, tabs))
+        set({ tabs: R.update(idx, newTab, tabs) })
 
         event.emit("reload", newTab)
 
@@ -371,7 +370,7 @@ export const createTabsStore = (
       }
 
       if (reloadTab.tabKey !== active.tabKey && isSwitch) {
-        push(reloadTab.identity, {
+        switchTo(reloadTab.tabKey, {
           replace: options.replace,
           callback: () => {
             reloadKey(reloadTab)
@@ -384,7 +383,7 @@ export const createTabsStore = (
       reloadKey(reloadTab)
     },
     close: (options = {}) => {
-      const { findActive, tabs, setTabs, findByKey, findNext, goBack } = get()
+      const { findActive, tabs, findByKey, findNext, goBack } = get()
 
       const active = findActive()
       const closeTab = options.tab instanceof OpenTab ? options.tab : options.tab ? findByKey(options.tab) : active
@@ -400,7 +399,7 @@ export const createTabsStore = (
       const backTo = closeTabKey === active.tabKey ? findNext(closeTabKey) : options.backTo
 
       if (!backTo) {
-        setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
+        set({ tabs: R.reject(tabKeyEq(closeTabKey), tabs) })
 
         options.callback?.(active)
 
@@ -412,14 +411,14 @@ export const createTabsStore = (
         reload: options.reload,
         replace: options.replace,
         callback: (tab) => {
-          setTabs(R.reject(tabKeyEq(closeTabKey), tabs))
+          set({ tabs: R.reject(tabKeyEq(closeTabKey), tabs) })
 
           options.callback?.(tab)
         },
       })
     },
     closeRight: (options = {}) => {
-      const { findActive, tabs, setTabs, findIndexByKey, switchTo } = get()
+      const { findActive, tabs, findIndexByKey, switchTo } = get()
 
       const active = findActive()
       const tab = options.tab || active
@@ -430,21 +429,21 @@ export const createTabsStore = (
 
       switchTo(tab.tabKey, {
         callback: () => {
-          setTabs(R.remove(start, count, tabs))
+          set({ tabs: R.remove(start, count, tabs) })
 
           options.callback?.(tab)
         },
       })
     },
     closeOthers: (options = {}) => {
-      const { findActive, tabs, setTabs, switchTo } = get()
+      const { findActive, tabs, switchTo } = get()
 
       const active = findActive()
       const tab = options.tab || active
 
       switchTo(tab.tabKey, {
         callback: (tab) => {
-          setTabs(R.filter(tabKeyEq(tab.tabKey), tabs))
+          set({ tabs: R.filter(tabKeyEq(tab.tabKey), tabs) })
 
           options.callback?.(tab)
         },

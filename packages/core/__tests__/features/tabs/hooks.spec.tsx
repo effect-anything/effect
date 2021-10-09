@@ -353,12 +353,10 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
 
     const switchToCallbackFn = jest.fn((tab) => tab)
 
-    await act(async () => {
+    act(() => {
       result.current.switchTo(result.current.tabs[0].tabKey, {
         callback: switchToCallbackFn,
       })
-
-      await waitForNextUpdate()
     })
 
     expect(switchToCallbackFn).toHaveBeenCalled()

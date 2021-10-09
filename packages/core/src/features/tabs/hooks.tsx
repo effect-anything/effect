@@ -1,16 +1,16 @@
 import React from "react"
 import { useStore } from "./context"
-import { TabLocation } from "./types"
+import { TabItem } from "./types"
 import { CloseMethodOptions, CloseRightMethodOptions, ReloadMethodOptions } from "./state"
 
 export const useTabActive = () => {
   const { active, activeKey, activeIndex } = useStore((state) => {
-    const idx = state.findIndexByLocation(state.location)
+    const index = state.tabs.findIndex((x) => state.adapter.equal(x.identity, state.identity))
 
     return {
-      active: state.tabs[idx],
-      activeKey: state.tabs[idx]?.tabKey,
-      activeIndex: idx,
+      active: state.tabs[index],
+      activeKey: state.tabs[index]?.tabKey,
+      activeIndex: index,
     }
   })
 
@@ -19,36 +19,6 @@ export const useTabActive = () => {
     activeKey,
     activeIndex,
   }
-}
-
-export interface TabItem {
-  index: number
-
-  tabKey: string
-
-  identity: TabLocation
-
-  getComponent: () => JSX.Element
-
-  properties: Record<string, any>
-
-  isHead: boolean
-
-  isLast: boolean
-
-  reload(): void
-
-  canClose: boolean
-
-  close(): void
-
-  canCloseRight: boolean
-
-  closeRight(): void
-
-  canCloseOthers: boolean
-
-  closeOthers(): void
 }
 
 export const useTabs = () => {

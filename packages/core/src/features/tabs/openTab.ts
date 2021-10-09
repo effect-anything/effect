@@ -1,5 +1,6 @@
 import { FunctionComponent, ReactNode, cloneElement, isValidElement } from "react"
-import { TabLocation } from "./types"
+import * as R from "ramda"
+import { TabIdentity } from "./types"
 
 export type ReactChildren = ReactNode | undefined
 
@@ -21,6 +22,8 @@ const withChildren = (children: ReactNode): FunctionComponent => {
 
 export const getRandomKey = () => Math.ceil(Math.random() * 10000) + ""
 
+export const tabKeyEq = R.propEq("tabKey")
+
 interface ITabProperties {
   title: string
   key: string
@@ -28,23 +31,23 @@ interface ITabProperties {
 
 interface OpenTabOptions {
   tabKey: string
-  identity: TabLocation
+  identity: TabIdentity
   component: ReactChildren
 }
 
 export class OpenTab {
   public tabKey: string
 
-  public identity: TabLocation
+  public identity: TabIdentity
 
   public properties: ITabProperties
 
   public component: FunctionComponent<{
-    location: TabLocation
+    location: TabIdentity
   }>
 
   constructor({ tabKey, identity, component }: OpenTabOptions) {
-    this.tabKey = tabKey + ""
+    this.tabKey = tabKey
 
     this.identity = identity
 

@@ -5,22 +5,22 @@ import { createTabsStore } from "./state"
 import { TabsAdapter } from "./types"
 
 export const TabsSync: FunctionComponent = ({ children }) => {
-  const location = useStore((state) => state.location)
-  const { update, adapter, updateLocation } = useStore((state) => ({
+  const identity = useStore((state) => state.identity)
+  const { update, adapter, updateIdentity } = useStore((state) => ({
     adapter: state.adapter,
     update: state.update,
-    updateLocation: state.updateLocation,
+    updateIdentity: state.updateIdentity,
   }))
 
   useEffect(() => {
-    update(location, children)
-  }, [children, location, update])
+    update(identity, children)
+  }, [children, identity, update])
 
   useEffect(() => {
-    const unSubscribe = adapter.listen((location) => updateLocation(location))
+    const unsubscribe = adapter.listen((identity) => updateIdentity(identity))
 
-    return unSubscribe
-  }, [adapter, updateLocation])
+    return unsubscribe
+  }, [adapter, updateIdentity])
 
   return null
 }
