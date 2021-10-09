@@ -143,9 +143,9 @@ export const createTabsStore = (
     tabs: initialTabs,
     historyChangeCallback: null,
     update: (identity, children) => {
-      const { historyChangeCallback, tabs, findIndexByIdentity } = get()
+      const { historyChangeCallback, tabs, adapter, findIndexByIdentity } = get()
 
-      const exist = adapterApi.exist(tabs, identity)
+      const exist = adapter.exist(tabs, identity)
 
       if (exist) {
         const index = findIndexByIdentity(identity)
@@ -312,14 +312,14 @@ export const createTabsStore = (
       })
     },
     goBack: (options = {}) => {
-      const { findActive, findByIdentity, findNext, push, reload } = get()
+      const { push, reload, adapter, findActive, findByIdentity, findNext } = get()
 
       const active = findActive()
       const nextTab =
         options.backTo instanceof OpenTab
           ? options.backTo
           : options.backTo
-          ? findByIdentity(adapterApi.getIdentity(options.backTo))
+          ? findByIdentity(adapter.getIdentity(options.backTo))
           : findNext(active.tabKey)
 
       if (!nextTab) {
