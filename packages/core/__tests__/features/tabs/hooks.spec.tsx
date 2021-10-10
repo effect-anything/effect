@@ -6,6 +6,7 @@ import { renderHook, act } from "@testing-library/react-hooks"
 import { Router, Route, Switch } from "react-router-dom"
 import { Provider as TabsProvider } from "../../../src/features/tabs/provider"
 import { useTabsAction } from "../../../src/features/tabs/hooks"
+import { OpenTab } from "packages/core/src/features/tabs/openTab"
 
 const browserHistory = (options?: Parameters<typeof createBrowserHistory>) =>
   createBrowserHistory({
@@ -257,8 +258,8 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    act(() => {
-      result.current.switchTo(result.current.tabs[0].tabKey)
+    await act(async () => {
+      await result.current.switchTo(result.current.tabs[0].tabKey)
     })
 
     // tabs: [/, tab1], current: /
@@ -289,17 +290,17 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const switchToCallbackFn = jest.fn((tab) => tab)
+    const switchToCallbackFn = jest.fn((tab: OpenTab) => tab)
 
-    act(() => {
-      result.current.switchTo(result.current.tabs[0].tabKey, {
-        callback: switchToCallbackFn,
-      })
+    await act(async () => {
+      await result.current.switchTo(result.current.tabs[0].tabKey).then(switchToCallbackFn)
     })
 
     expect(switchToCallbackFn).toHaveBeenCalled()
     expect(switchToCallbackFn).toHaveBeenCalledTimes(1)
-    expect(switchToCallbackFn).toHaveBeenCalledWith(result.current.tabs[0])
+    expect(switchToCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[0].identity })
+    )
 
     // tabs: [/, tab1], current: /
     expect(result.current.tabs).toHaveLength(2)
@@ -308,7 +309,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
   })
 
   it("switch to tab that does not exist", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -320,17 +321,22 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.identity.pathname).toEqual("/")
 
-    const switchToCallbackFn = jest.fn((tab) => tab)
+    const successCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const failedCallbackFn = jest.fn((tab: OpenTab) => tab)
 
-    act(() => {
-      result.current.switchTo("NOT_FOUND_KEY", {
-        callback: switchToCallbackFn,
-      })
+    await act(async () => {
+      await result.current.switchTo("NOT_FOUND_KEY").then(successCallbackFn).catch(failedCallbackFn)
     })
 
-    expect(switchToCallbackFn).toHaveBeenCalled()
-    expect(switchToCallbackFn).toHaveBeenCalledTimes(1)
-    expect(switchToCallbackFn).toHaveBeenCalledWith(result.current.tabs[0])
+    expect(successCallbackFn).toHaveBeenCalledTimes(0)
+
+    expect(failedCallbackFn).toHaveBeenCalled()
+    expect(failedCallbackFn).toHaveBeenCalledTimes(1)
+    expect(failedCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining("switchTo tab not found"),
+      })
+    )
 
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
@@ -339,7 +345,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
   })
 
   it("switching to the same tab", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -351,20 +357,69 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.identity.pathname).toEqual("/")
 
-    const switchToCallbackFn = jest.fn((tab) => tab)
+    const switchToCallbackFn = jest.fn((tab: OpenTab) => tab)
 
-    act(() => {
-      result.current.switchTo(result.current.tabs[0].tabKey, {
-        callback: switchToCallbackFn,
-      })
+    await act(async () => {
+      await result.current.switchTo(result.current.tabs[0].tabKey).then(switchToCallbackFn)
     })
 
     expect(switchToCallbackFn).toHaveBeenCalled()
     expect(switchToCallbackFn).toHaveBeenCalledTimes(1)
-    expect(switchToCallbackFn).toHaveBeenCalledWith(result.current.tabs[0])
+    expect(switchToCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[0].identity })
+    )
 
     // tabs: [/], current: /
     expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.identity.pathname).toEqual("/")
+  })
+
+  it("switch#reload", async () => {
+    const { result } = renderHook(() => useTabsAction(), {
+      wrapper,
+      initialProps: {
+        history,
+      },
+    })
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(1)
+    expect(result.current.activeIndex).toEqual(0)
+    expect(result.current.active.identity.pathname).toEqual("/")
+
+    act(() => {
+      history.push("/tab1")
+    })
+
+    // tabs: [/, tab1], current: tab1
+    expect(result.current.tabs).toHaveLength(2)
+    expect(result.current.activeIndex).toEqual(1)
+    expect(result.current.active.identity.pathname).toEqual("/tab1")
+
+    // tab1 -> tabKey
+    const prevKey = result.current.tabs[0].tabKey
+
+    const switchToCallbackFn = jest.fn((tab: OpenTab) => tab)
+
+    await act(async () => {
+      await result.current
+        .switchTo(result.current.tabs[0].tabKey, {
+          reload: true,
+        })
+        .then(switchToCallbackFn)
+    })
+
+    expect(prevKey !== result.current.tabs[0].tabKey)
+
+    expect(switchToCallbackFn).toHaveBeenCalled()
+    expect(switchToCallbackFn).toHaveBeenCalledTimes(1)
+    expect(switchToCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[0].identity })
+    )
+
+    // tabs: [/], current: /
+    expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.identity.pathname).toEqual("/")
   })
@@ -380,7 +435,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
   })
 
   it("push", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -401,8 +456,8 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    act(() => {
-      result.current.push("/")
+    await act(async () => {
+      await result.current.push("/")
     })
 
     expect(result.current.tabs).toHaveLength(2)
@@ -411,7 +466,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
   })
 
   it("push exist location should work#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -432,69 +487,23 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const pushCallbackFn = jest.fn((tab) => tab)
+    const pushCallbackFn = jest.fn((tab: OpenTab) => tab)
 
-    act(() => {
-      result.current.push("/", {
-        callback: pushCallbackFn,
-      })
+    await act(async () => {
+      await result.current.push("/").then(pushCallbackFn)
     })
 
     expect(pushCallbackFn).toHaveBeenCalled()
     expect(pushCallbackFn).toHaveBeenCalledTimes(1)
-    expect(pushCallbackFn).toHaveBeenCalledWith(result.current.tabs[0])
+    expect(pushCallbackFn).toHaveBeenCalledWith(expect.objectContaining({ identity: result.current.tabs[0].identity }))
 
     expect(result.current.tabs).toHaveLength(2)
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.identity.pathname).toEqual("/")
-  })
-
-  it("push exist location#reload", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
-      wrapper,
-      initialProps: {
-        history,
-      },
-    })
-
-    // tabs: [/], current: /
-    expect(result.current.tabs).toHaveLength(1)
-    expect(result.current.activeIndex).toEqual(0)
-    expect(result.current.active.identity.pathname).toEqual("/")
-
-    act(() => {
-      history.push("/tab1")
-    })
-
-    // tabs: [/, tab1], current: tab1
-    expect(result.current.tabs).toHaveLength(2)
-    expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.identity.pathname).toEqual("/tab1")
-
-    const prevKey = result.current.tabs[1].properties.key
-
-    const pushCallbackFn = jest.fn((tab) => tab)
-
-    act(() => {
-      result.current.push("/tab1", {
-        callback: pushCallbackFn,
-        reload: true,
-      })
-    })
-
-    expect(prevKey !== result.current.tabs[1].properties.key)
-
-    expect(pushCallbackFn).toHaveBeenCalled()
-    expect(pushCallbackFn).toHaveBeenCalledTimes(1)
-    expect(pushCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
-
-    expect(result.current.tabs).toHaveLength(2)
-    expect(result.current.activeIndex).toEqual(1)
-    expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
   it("push exist location#replace", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -506,18 +515,19 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.identity.pathname).toEqual("/")
 
-    const pushCallbackFn = jest.fn((tab) => tab)
+    const pushCallbackFn = jest.fn((tab: OpenTab) => tab)
 
-    act(() => {
-      result.current.push("/tab1", {
-        callback: pushCallbackFn,
-        replace: true,
-      })
+    await act(async () => {
+      await result.current
+        .push("/tab1", {
+          replace: true,
+        })
+        .then(pushCallbackFn)
     })
 
     expect(pushCallbackFn).toHaveBeenCalled()
     expect(pushCallbackFn).toHaveBeenCalledTimes(1)
-    expect(pushCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
+    expect(pushCallbackFn).toHaveBeenCalledWith(expect.objectContaining({ identity: result.current.tabs[1].identity }))
 
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
@@ -525,8 +535,8 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     expect(result.current.active.identity.pathname).toEqual("/tab1")
   })
 
-  it("push a non-existent location should open a new tab", () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+  it("push a non-existent location should open a new tab", async () => {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -539,17 +549,15 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.identity.pathname).toEqual("/")
 
-    const pushCallbackFn = jest.fn((tab) => tab)
+    const pushCallbackFn = jest.fn((tab: OpenTab) => tab)
 
-    act(() => {
-      result.current.push("/tab1", {
-        callback: pushCallbackFn,
-      })
+    await act(async () => {
+      await result.current.push("/tab1").then(pushCallbackFn)
     })
 
     expect(pushCallbackFn).toHaveBeenCalled()
     expect(pushCallbackFn).toHaveBeenCalledTimes(1)
-    expect(pushCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
+    expect(pushCallbackFn).toHaveBeenCalledWith(expect.objectContaining({ identity: result.current.tabs[1].identity }))
 
     // tabs: [/, tab1], current: tab1
 
@@ -569,7 +577,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("backTo", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -594,9 +602,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     expect(result.current.active.identity.pathname).toEqual("/tab2")
 
     await act(async () => {
-      result.current.goBack()
-
-      await waitForNextUpdate()
+      await result.current.goBack()
     })
 
     // tabs: [/, tab1, tab2], current: tab1
@@ -606,7 +612,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("first tab, goBack", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -618,8 +624,8 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.identity.pathname).toEqual("/")
 
-    act(() => {
-      result.current.goBack()
+    await act(async () => {
+      await result.current.goBack()
     })
 
     // tabs: [/], current: /
@@ -629,7 +635,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("backTo#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -654,19 +660,17 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(2)
     expect(result.current.active.identity.pathname).toEqual("/tab2")
 
-    const goBackCallbackFn = jest.fn((tab) => tab)
+    const goBackCallbackFn = jest.fn((tab: OpenTab) => tab)
 
     await act(async () => {
-      result.current.goBack({
-        callback: goBackCallbackFn,
-      })
-
-      await waitForNextUpdate()
+      await result.current.goBack().then(goBackCallbackFn)
     })
 
     expect(goBackCallbackFn).toHaveBeenCalled()
     expect(goBackCallbackFn).toHaveBeenCalledTimes(1)
-    expect(goBackCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
+    expect(goBackCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[1].identity })
+    )
 
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(3)
@@ -675,7 +679,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("backTo#reload", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -699,26 +703,27 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(2)
     expect(result.current.active.identity.pathname).toEqual("/tab2")
 
-    const goBackCallbackFn = jest.fn((tab) => tab)
+    const goBackCallbackFn = jest.fn((tab: OpenTab) => tab)
 
     // tab1 -> tabKey
     const prevKey = result.current.tabs[1].tabKey
 
     await act(async () => {
       // back to tab1
-      result.current.goBack({
-        reload: true,
-        callback: goBackCallbackFn,
-      })
-
-      await waitForNextUpdate()
+      await result.current
+        .goBack({
+          reload: true,
+        })
+        .then(goBackCallbackFn)
     })
 
     expect(prevKey !== result.current.tabs[1].tabKey)
 
     expect(goBackCallbackFn).toHaveBeenCalled()
     expect(goBackCallbackFn).toHaveBeenCalledTimes(1)
-    expect(goBackCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
+    expect(goBackCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[1].identity })
+    )
 
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(3)
@@ -727,7 +732,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("include backTo OpenTab parameter", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -751,20 +756,21 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(2)
     expect(result.current.active.identity.pathname).toEqual("/tab2")
 
-    const goBackCallbackFn = jest.fn((tab) => tab)
+    const goBackCallbackFn = jest.fn((tab: OpenTab) => tab)
 
     await act(async () => {
-      result.current.goBack({
-        backTo: result.current.tabs[0],
-        callback: goBackCallbackFn,
-      })
-
-      await waitForNextUpdate()
+      await result.current
+        .goBack({
+          backTo: result.current.tabs[0],
+        })
+        .then(goBackCallbackFn)
     })
 
     expect(goBackCallbackFn).toHaveBeenCalled()
     expect(goBackCallbackFn).toHaveBeenCalledTimes(1)
-    expect(goBackCallbackFn).toHaveBeenCalledWith(result.current.tabs[0])
+    expect(goBackCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[0].identity })
+    )
 
     // tabs: [/, tab1, tab2], current: /
     expect(result.current.tabs).toHaveLength(3)
@@ -772,7 +778,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("include backTo string parameter", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -796,20 +802,21 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(2)
     expect(result.current.active.identity.pathname).toEqual("/tab2")
 
-    const goBackCallbackFn = jest.fn((tab) => tab)
+    const goBackCallbackFn = jest.fn((tab: OpenTab) => tab)
 
     await act(async () => {
-      result.current.goBack({
-        backTo: "/tab1",
-        callback: goBackCallbackFn,
-      })
-
-      await waitForNextUpdate()
+      await result.current
+        .goBack({
+          backTo: "/tab1",
+        })
+        .then(goBackCallbackFn)
     })
 
     expect(goBackCallbackFn).toHaveBeenCalled()
     expect(goBackCallbackFn).toHaveBeenCalledTimes(1)
-    expect(goBackCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
+    expect(goBackCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[1].identity })
+    )
 
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(3)
@@ -818,7 +825,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
   })
 
   it("include backTo not found", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -839,18 +846,21 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const goBackCallbackFn = jest.fn((tab) => tab)
+    const goBackCallbackFn = jest.fn((tab: OpenTab) => tab)
 
-    act(() => {
-      result.current.goBack({
-        backTo: "/NOT_FOUND",
-        callback: goBackCallbackFn,
-      })
+    await act(async () => {
+      await result.current
+        .goBack({
+          backTo: "/NOT_FOUND",
+        })
+        .then(goBackCallbackFn)
     })
 
     expect(goBackCallbackFn).toHaveBeenCalled()
     expect(goBackCallbackFn).toHaveBeenCalledTimes(1)
-    expect(goBackCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
+    expect(goBackCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[1].identity })
+    )
 
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(2)
@@ -869,7 +879,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
   })
 
   it("reload", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -894,9 +904,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     const prevKey = result.current.tabs[1].tabKey
 
     await act(async () => {
-      result.current.reload()
-
-      await waitForNextUpdate()
+      await result.current.reload()
     })
 
     expect(prevKey !== result.current.tabs[1].tabKey)
@@ -908,7 +916,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
   })
 
   it("reload#tab does exist", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -929,15 +937,27 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.identity.pathname).toEqual("/tab1")
 
+    const failedCallbackFn = jest.fn((tab: OpenTab) => tab)
+
     const prevTabs = result.current.tabs
 
-    act(() => {
-      result.current.reload({
-        tab: "FAKE_TAB_KEY",
-      })
+    await act(async () => {
+      await result.current
+        .reload({
+          tab: "FAKE_TAB_KEY",
+        })
+        .catch(failedCallbackFn)
     })
 
     expect(prevTabs === result.current.tabs)
+
+    expect(failedCallbackFn).toHaveBeenCalled()
+    expect(failedCallbackFn).toHaveBeenCalledTimes(1)
+    expect(failedCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining("reload tab not found"),
+      })
+    )
 
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(2)
@@ -946,7 +966,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
   })
 
   it("reload#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -976,25 +996,26 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.identity.pathname).toEqual("/")
 
-    const reloadCallbackFn = jest.fn((tab) => tab)
+    const reloadCallbackFn = jest.fn((tab: OpenTab) => tab)
 
     // tab1 -> tabKey
     const prevKey = result.current.tabs[1].tabKey
 
     await act(async () => {
-      result.current.reload({
-        tab: result.current.tabs[1],
-        callback: reloadCallbackFn,
-      })
-
-      await waitForNextUpdate()
+      await result.current
+        .reload({
+          tab: result.current.tabs[1],
+        })
+        .then(reloadCallbackFn)
     })
 
     expect(prevKey !== result.current.tabs[1].tabKey)
 
     expect(reloadCallbackFn).toHaveBeenCalled()
     expect(reloadCallbackFn).toHaveBeenCalledTimes(1)
-    expect(reloadCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
+    expect(reloadCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[1].identity })
+    )
 
     // tabs: [/, tab1, tab2], current: tab1
     expect(result.current.tabs).toHaveLength(2)
@@ -1005,7 +1026,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
   it("reload#replace", async () => {})
 
   it("reload#switch=false", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1035,26 +1056,27 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(0)
     expect(result.current.active.identity.pathname).toEqual("/")
 
-    const reloadCallbackFn = jest.fn((tab) => tab)
+    const reloadCallbackFn = jest.fn((tab: OpenTab) => tab)
 
     // tab1 -> tabKey
     const prevKey = result.current.tabs[1].tabKey
 
     await act(async () => {
-      result.current.reload({
-        tab: result.current.tabs[1],
-        callback: reloadCallbackFn,
-        switch: false,
-      })
-
-      await waitForNextUpdate()
+      await result.current
+        .reload({
+          tab: result.current.tabs[1],
+          switch: false,
+        })
+        .then(reloadCallbackFn)
     })
 
     expect(prevKey !== result.current.tabs[1].tabKey)
 
     expect(reloadCallbackFn).toHaveBeenCalled()
     expect(reloadCallbackFn).toHaveBeenCalledTimes(1)
-    expect(reloadCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
+    expect(reloadCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[1].identity })
+    )
 
     // tabs: [/, tab1, tab2], current: /
     expect(result.current.tabs).toHaveLength(2)
@@ -1073,7 +1095,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close current tab", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1096,9 +1118,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
 
     // default close current "tab1"
     await act(async () => {
-      result.current.close()
-
-      await waitForNextUpdate()
+      await result.current.close()
     })
 
     // tabs: [/], current: /
@@ -1108,7 +1128,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close first tab", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1135,9 +1155,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
 
     // default close current "tab1"
     await act(async () => {
-      result.current.close()
-
-      await waitForNextUpdate()
+      await result.current.close()
     })
 
     // tabs: [/], current: /
@@ -1147,7 +1165,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close#tab does not exist", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1168,19 +1186,28 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const closeCallbackFn = jest.fn((tab) => tab)
+    const successCallbackFn = jest.fn((tab: OpenTab) => tab)
+    const failedCallbackFn = jest.fn((tab: OpenTab) => tab)
 
     // close /
-    act(() => {
-      result.current.close({
-        tab: "FAKE_TAB_KEY",
-        callback: closeCallbackFn,
-      })
+    await act(async () => {
+      await result.current
+        .close({
+          tab: "FAKE_TAB_KEY",
+        })
+        .then(successCallbackFn)
+        .catch(failedCallbackFn)
     })
 
-    expect(closeCallbackFn).toHaveBeenCalled()
-    expect(closeCallbackFn).toHaveBeenCalledTimes(1)
-    expect(closeCallbackFn).toHaveBeenCalledWith(result.current.tabs[1])
+    expect(successCallbackFn).toHaveBeenCalledTimes(0)
+
+    expect(failedCallbackFn).toHaveBeenCalled()
+    expect(failedCallbackFn).toHaveBeenCalledTimes(1)
+    expect(failedCallbackFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining("close tab not found"),
+      })
+    )
 
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
@@ -1189,7 +1216,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1210,20 +1237,16 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const closeCallbackFn = jest.fn((tab) => tab)
+    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
 
     // close current "tab1"
     await act(async () => {
-      result.current.close({
-        callback: closeCallbackFn,
-      })
-
-      await waitForNextUpdate()
+      await result.current.close().then(closeCallbackFn)
     })
 
     expect(closeCallbackFn).toHaveBeenCalled()
     expect(closeCallbackFn).toHaveBeenCalledTimes(1)
-    expect(closeCallbackFn).toHaveBeenCalledWith(result.current.tabs[0])
+    expect(closeCallbackFn).toHaveBeenCalledWith(expect.objectContaining({ identity: result.current.tabs[0].identity }))
 
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(1)
@@ -1232,7 +1255,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close#backTo", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1253,20 +1276,16 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const closeCallbackFn = jest.fn((tab) => tab)
+    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
 
     // close current "tab1"
     await act(async () => {
-      result.current.close({
-        callback: closeCallbackFn,
-      })
-
-      await waitForNextUpdate()
+      await result.current.close().then(closeCallbackFn)
     })
 
     expect(closeCallbackFn).toHaveBeenCalled()
     expect(closeCallbackFn).toHaveBeenCalledTimes(1)
-    expect(closeCallbackFn).toHaveBeenCalledWith(result.current.tabs[0])
+    expect(closeCallbackFn).toHaveBeenCalledWith(expect.objectContaining({ identity: result.current.tabs[0].identity }))
 
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(1)
@@ -1275,7 +1294,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close#backTo2", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1296,20 +1315,19 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const closeCallbackFn = jest.fn((tab) => tab)
+    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
 
     await act(async () => {
-      result.current.close({
-        backTo: "NOT_FOUND",
-        callback: closeCallbackFn,
-      })
-
-      await waitForNextUpdate()
+      await result.current
+        .close({
+          backTo: "NOT_FOUND",
+        })
+        .then(closeCallbackFn)
     })
 
     expect(closeCallbackFn).toHaveBeenCalled()
     expect(closeCallbackFn).toHaveBeenCalledTimes(1)
-    expect(closeCallbackFn).toHaveBeenCalledWith(result.current.tabs[0])
+    expect(closeCallbackFn).toHaveBeenCalledWith(expect.objectContaining({ identity: result.current.tabs[0].identity }))
 
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(1)
@@ -1318,7 +1336,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
   })
 
   it("close#backTo3", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history,
@@ -1339,21 +1357,20 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(1)
     expect(result.current.active.identity.pathname).toEqual("/tab1")
 
-    const closeCallbackFn = jest.fn((tab) => tab)
+    const closeCallbackFn = jest.fn((tab: OpenTab) => tab)
 
     // close /
     await act(async () => {
-      result.current.close({
-        tab: result.current.tabs[0],
-        callback: closeCallbackFn,
-      })
-
-      await waitForNextUpdate()
+      await result.current
+        .close({
+          tab: result.current.tabs[0],
+        })
+        .then(closeCallbackFn)
     })
 
     expect(closeCallbackFn).toHaveBeenCalled()
     expect(closeCallbackFn).toHaveBeenCalledTimes(1)
-    expect(closeCallbackFn).toHaveBeenCalledWith(result.current.tabs[0])
+    expect(closeCallbackFn).toHaveBeenCalledWith(expect.objectContaining({ identity: result.current.tabs[0].identity }))
 
     // tabs: [tab1], current: tab1
     expect(result.current.tabs).toHaveLength(1)
@@ -1374,7 +1391,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
   })
 
   it("close right", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1404,9 +1421,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     expect(result.current.active.identity.pathname).toEqual("/tab3")
 
     await act(async () => {
-      result.current.closeRight()
-
-      await waitForNextUpdate()
+      await result.current.closeRight()
     })
 
     // tabs: [/, tab1], current: tab1
@@ -1416,7 +1431,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
   })
 
   it("close right#tab", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1446,11 +1461,9 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     expect(result.current.active.identity.pathname).toEqual("/tab3")
 
     await act(async () => {
-      result.current.closeRight({
+      await result.current.closeRight({
         tab: result.current.tabs[1],
       })
-
-      await waitForNextUpdate()
     })
 
     // tabs: [/, tab1], current: tab1
@@ -1460,7 +1473,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
   })
 
   it("close right#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1489,20 +1502,21 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(3)
     expect(result.current.active.identity.pathname).toEqual("/tab3")
 
-    const closeRightCallback = jest.fn((tab) => tab)
+    const closeRightCallback = jest.fn((tab: OpenTab) => tab)
 
     await act(async () => {
-      result.current.closeRight({
-        tab: result.current.tabs[1],
-        callback: closeRightCallback,
-      })
-
-      await waitForNextUpdate()
+      await result.current
+        .closeRight({
+          tab: result.current.tabs[1],
+        })
+        .then(closeRightCallback)
     })
 
     expect(closeRightCallback).toHaveBeenCalled()
     expect(closeRightCallback).toHaveBeenCalledTimes(1)
-    expect(closeRightCallback).toHaveBeenCalledWith(result.current.tabs[1])
+    expect(closeRightCallback).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[1].identity })
+    )
 
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)
@@ -1521,7 +1535,7 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
   })
 
   it("close others", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1551,9 +1565,7 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
     expect(result.current.active.identity.pathname).toEqual("/tab3")
 
     await act(async () => {
-      result.current.closeOthers()
-
-      await waitForNextUpdate()
+      await result.current.closeOthers()
     })
 
     // tabs: [/, tab1], current: tab1
@@ -1563,7 +1575,7 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
   })
 
   it("close others#callback", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTabsAction(), {
+    const { result } = renderHook(() => useTabsAction(), {
       wrapper,
       initialProps: {
         history: history,
@@ -1592,20 +1604,22 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
     expect(result.current.activeIndex).toEqual(3)
     expect(result.current.active.identity.pathname).toEqual("/tab3")
 
-    const closeRightCallback = jest.fn((tab) => tab)
+    const closeRightCallback = jest.fn((tab: OpenTab) => tab)
 
     await act(async () => {
-      result.current.closeRight({
-        tab: result.current.tabs[1],
-        callback: closeRightCallback,
-      })
-
-      await waitForNextUpdate()
+      await result.current
+        .closeRight({
+          tab: result.current.tabs[1],
+        })
+        .then(closeRightCallback)
     })
 
     expect(closeRightCallback).toHaveBeenCalled()
     expect(closeRightCallback).toHaveBeenCalledTimes(1)
-    expect(closeRightCallback).toHaveBeenCalledWith(result.current.tabs[1])
+
+    expect(closeRightCallback).toHaveBeenCalledWith(
+      expect.objectContaining({ identity: result.current.tabs[1].identity })
+    )
 
     // tabs: [/, tab1], current: tab1
     expect(result.current.tabs).toHaveLength(2)

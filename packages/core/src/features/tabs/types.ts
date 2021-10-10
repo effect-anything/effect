@@ -36,19 +36,19 @@ export interface TabItem {
 
   isLast: boolean
 
-  reload(): void
+  reload(): Promise<OpenTab>
 
   canClose: boolean
 
-  close(): void
+  close(): Promise<OpenTab>
 
   canCloseRight: boolean
 
-  closeRight(): void
+  closeRight(): Promise<OpenTab>
 
   canCloseOthers: boolean
 
-  closeOthers(): void
+  closeOthers(): Promise<OpenTab>
 }
 
 export type TabsAdapter<T = any> = (t: T & { event: EventEmitter }) => {

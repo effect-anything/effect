@@ -9,32 +9,27 @@ import { adapter as ReactRouterAdapter } from "./adapters/react-router"
 
 export interface OnChangeMethodOptions {
   replace?: boolean
-  callback?: (tab: OpenTab) => void
 }
 
 export interface PushMethodOptions {
   replace?: boolean
-  callback?: (tab: OpenTab) => void
 }
 
 export interface SwitchToMethodOptions {
   reload?: boolean
   replace?: boolean
-  callback?: (tab: OpenTab) => void
 }
 
 export interface ReloadMethodOptions {
   tab?: OpenTab | TabKey
   switch?: boolean
   replace?: boolean
-  callback?: (tab: OpenTab) => void
 }
 
 export interface BackToMethodOptions {
   backTo?: OpenTab | JumpTabIdentity
   reload?: boolean
   replace?: boolean
-  callback?: (tab: OpenTab) => void
 }
 
 export interface CloseMethodOptions {
@@ -42,17 +37,14 @@ export interface CloseMethodOptions {
   backTo?: OpenTab | JumpTabIdentity
   reload?: boolean
   replace?: boolean
-  callback?: (tab: OpenTab) => void
 }
 
 export interface CloseRightMethodOptions {
   tab?: OpenTab
-  callback?: (tab: OpenTab) => void
 }
 
 export interface CloseOthersMethodOptions {
   tab?: OpenTab
-  callback?: (tab: OpenTab) => void
 }
 
 export type State = {
@@ -62,7 +54,7 @@ export type State = {
 
   readonly tabs: OpenTab[]
 
-  readonly updateAfterCallback: UpdateAfterCallback | null
+  readonly updateAfterCallback: UpdateAfterCallback | undefined
 
   readonly adapter: ReturnType<TabsAdapter>
 
@@ -82,21 +74,21 @@ export type State = {
 
   findActive(): OpenTab
 
-  onChange(path: TabIdentity, options: OnChangeMethodOptions): void
+  onChange(path: TabIdentity, options: OnChangeMethodOptions): Promise<OpenTab>
 
-  push(path: TabIdentity | JumpTabIdentity, options?: PushMethodOptions): void
+  push(path: TabIdentity | JumpTabIdentity, options?: PushMethodOptions): Promise<OpenTab>
 
-  switchTo(tabKey: TabKey, options?: SwitchToMethodOptions): void
+  switchTo(tabKey: TabKey, options?: SwitchToMethodOptions): Promise<OpenTab>
 
-  goBack(options?: BackToMethodOptions): void
+  goBack(options?: BackToMethodOptions): Promise<OpenTab>
 
-  reload(options?: ReloadMethodOptions): void
+  reload(options?: ReloadMethodOptions): Promise<OpenTab>
 
-  close(options?: CloseMethodOptions): void
+  close(options?: CloseMethodOptions): Promise<OpenTab>
 
-  closeRight(options?: CloseRightMethodOptions): void
+  closeRight(options?: CloseRightMethodOptions): Promise<OpenTab>
 
-  closeOthers(options?: CloseOthersMethodOptions): void
+  closeOthers(options?: CloseOthersMethodOptions): Promise<OpenTab>
 }
 
 interface TabsStoreOptions {
@@ -141,7 +133,7 @@ export const createTabsStore = (
     adapter: adapterApi,
     identity: initialIdentity,
     tabs: initialTabs,
-    updateAfterCallback: null,
+    updateAfterCallback: undefined,
     update: (identity, children) => {
       const { updateAfterCallback, tabs, adapter, findIndexByIdentity } = get()
 
@@ -188,7 +180,7 @@ export const createTabsStore = (
         } catch {}
 
         set({
-          updateAfterCallback: null,
+          updateAfterCallback: undefined,
         })
       }
     },
@@ -236,33 +228,35 @@ export const createTabsStore = (
 
       return findByIdentity(identity)!
     },
-    onChange: (changeTabIdentity, { replace, callback }) => {
+    onChange: (changeTabIdentity, { replace }) => {
       const { event, adapter, identity, findByIdentity } = get()
 
-      const afterCallback: UpdateAfterCallback = (identity) => {
-        const currentTab = findByIdentity(identity)!
-        const name = replace ? "replace" : "push"
+      return new Promise<OpenTab>((resolve) => {
+        const afterCallback: UpdateAfterCallback = (identity) => {
+          const currentTab = findByIdentity(identity)!
+          const name = replace ? "replace" : "push"
 
-        event.emit(name, currentTab)
+          event.emit(name, currentTab)
 
-        callback?.(currentTab)
-      }
+          resolve?.(currentTab)
+        }
 
-      if (R.equals(changeTabIdentity, identity)) {
-        afterCallback(identity)
+        if (R.equals(changeTabIdentity, identity)) {
+          afterCallback(identity)
 
-        return
-      }
+          return
+        }
 
-      set({
-        updateAfterCallback: afterCallback,
+        set({
+          updateAfterCallback: afterCallback,
+        })
+
+        if (replace) {
+          adapter.replace(changeTabIdentity)
+        } else {
+          adapter.push(changeTabIdentity)
+        }
       })
-
-      if (replace) {
-        adapter.replace(changeTabIdentity)
-      } else {
-        adapter.push(changeTabIdentity)
-      }
     },
     push: (pushIdentity, options = {}) => {
       const { findByIdentity, findIndexByKey, onChange, tabs, adapter } = get()
@@ -282,35 +276,34 @@ export const createTabsStore = (
           set({ tabs: R.update(index, existTab, tabs) })
         }
 
-        onChange(existTab.identity, {
+        return onChange(existTab.identity, {
           replace: options.replace,
-          callback: options.callback,
-        })
-      } else {
-        onChange(identity, {
-          replace: options.replace,
-          callback: options.callback,
         })
       }
+
+      return onChange(identity, {
+        replace: options.replace,
+      })
     },
     switchTo: (tabKey, options = {}) => {
-      const { findActive, findByKey, push } = get()
+      const { findByKey, push, reload } = get()
 
       const targetTab = findByKey(tabKey)
 
       if (!targetTab) {
-        const active = findActive()
-
-        // TODO: callback
-        options.callback?.(active)
-
-        return
+        return Promise.reject(new Error("switchTo tab not found"))
       }
 
-      push(targetTab.identity, {
-        reload: options.reload,
+      return push(targetTab.identity, {
         replace: options.replace,
-        callback: options.callback,
+      }).then((tab) => {
+        if (options.reload) {
+          return reload({
+            tab: tab,
+          })
+        }
+
+        return tab
       })
     },
     goBack: (options = {}) => {
@@ -325,37 +318,29 @@ export const createTabsStore = (
           : findNext(active.tabKey)
 
       if (!nextTab) {
-        // TODO: callback
-        options.callback?.(active)
-
-        return
+        return Promise.resolve(active)
       }
 
-      push(nextTab.identity, {
+      return push(nextTab.identity, {
         replace: options.replace,
-        callback: () => {
-          if (options.reload) {
-            reload({
-              tab: nextTab,
-              callback: options.callback,
-            })
-          } else {
-            options.callback?.(nextTab)
-          }
-        },
+      }).then((tab) => {
+        if (options.reload) {
+          return reload({
+            tab: tab,
+          })
+        }
+
+        return tab
       })
     },
     reload: (options = {}) => {
-      const { event, findActive, tabs, findByKey, findIndexByKey, switchTo } = get()
+      const { event, findActive, tabs, findByKey, findIndexByKey, push } = get()
 
       const active = findActive()
       const reloadTab = options.tab instanceof OpenTab ? options.tab : options.tab ? findByKey(options.tab) : active
 
       if (!reloadTab) {
-        // TODO: callback
-        options.callback?.(active)
-
-        return
+        return Promise.reject(new Error("reload tab not found"))
       }
 
       const isSwitch = options.switch ?? true
@@ -368,21 +353,16 @@ export const createTabsStore = (
 
         event.emit("reload", newTab)
 
-        options.callback?.(newTab)
+        return Promise.resolve(tab)
       }
 
       if (reloadTab.tabKey !== active.tabKey && isSwitch) {
-        switchTo(reloadTab.tabKey, {
+        return push(reloadTab.identity, {
           replace: options.replace,
-          callback: () => {
-            reloadKey(reloadTab)
-          },
-        })
-
-        return
+        }).then((tab) => reloadKey(tab))
       }
 
-      reloadKey(reloadTab)
+      return reloadKey(reloadTab)
     },
     close: (options = {}) => {
       const { findActive, tabs, findByKey, findNext, goBack } = get()
@@ -392,10 +372,7 @@ export const createTabsStore = (
       const closeTabKey = closeTab?.tabKey
 
       if (!closeTab || !closeTabKey) {
-        // TODO: callback
-        options.callback?.(active)
-
-        return
+        return Promise.reject(new Error("close tab not found"))
       }
 
       const backTo = closeTabKey === active.tabKey ? findNext(closeTabKey) : options.backTo
@@ -403,20 +380,17 @@ export const createTabsStore = (
       if (!backTo) {
         set({ tabs: R.reject(tabKeyEq(closeTabKey), tabs) })
 
-        options.callback?.(active)
-
-        return
+        return Promise.resolve(active)
       }
 
-      goBack({
+      return goBack({
         backTo: backTo,
         reload: options.reload,
         replace: options.replace,
-        callback: (tab) => {
-          set({ tabs: R.reject(tabKeyEq(closeTabKey), tabs) })
+      }).then((tab) => {
+        set({ tabs: R.reject(tabKeyEq(closeTabKey), tabs) })
 
-          options.callback?.(tab)
-        },
+        return tab
       })
     },
     closeRight: (options = {}) => {
@@ -429,12 +403,10 @@ export const createTabsStore = (
       const start = R.max(index + 1, 0)
       const count = R.max(1, tabs.length - index - 1)
 
-      switchTo(tab.tabKey, {
-        callback: () => {
-          set({ tabs: R.remove(start, count, tabs) })
+      return switchTo(tab.tabKey, {}).then((tab) => {
+        set({ tabs: R.remove(start, count, tabs) })
 
-          options.callback?.(tab)
-        },
+        return tab
       })
     },
     closeOthers: (options = {}) => {
@@ -443,12 +415,10 @@ export const createTabsStore = (
       const active = findActive()
       const tab = options.tab || active
 
-      switchTo(tab.tabKey, {
-        callback: (tab) => {
-          set({ tabs: R.filter(tabKeyEq(tab.tabKey), tabs) })
+      return switchTo(tab.tabKey, {}).then((tab) => {
+        set({ tabs: R.filter(tabKeyEq(tab.tabKey), tabs) })
 
-          options.callback?.(tab)
-        },
+        return tab
       })
     },
   }))
