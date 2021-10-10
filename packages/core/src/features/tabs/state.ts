@@ -4,7 +4,7 @@ import create from "zustand"
 import { getRandomKey, OpenTab, ReactChildren, tabKeyEq } from "./openTab"
 // @ts-expect-error
 import hash from "hash-string"
-import { HistoryCallbackSave, JumpTabIdentity, TabIdentity, TabKey, TabsAdapter } from "./types"
+import { UpdateAfterCallback, JumpTabIdentity, TabIdentity, TabKey, TabsAdapter } from "./types"
 import { adapter as ReactRouterAdapter } from "./adapters/react-router"
 
 export interface OnChangeMethodOptions {
@@ -62,7 +62,7 @@ export type State = {
 
   readonly tabs: OpenTab[]
 
-  readonly historyChangeCallback: HistoryCallbackSave | null
+  readonly updateAfterCallback: UpdateAfterCallback | null
 
   readonly adapter: ReturnType<TabsAdapter>
 
@@ -141,9 +141,9 @@ export const createTabsStore = (
     adapter: adapterApi,
     identity: initialIdentity,
     tabs: initialTabs,
-    historyChangeCallback: null,
+    updateAfterCallback: null,
     update: (identity, children) => {
-      const { historyChangeCallback, tabs, adapter, findIndexByIdentity } = get()
+      const { updateAfterCallback, tabs, adapter, findIndexByIdentity } = get()
 
       const exist = adapter.exist(tabs, identity)
 
@@ -182,11 +182,13 @@ export const createTabsStore = (
         })
       }
 
-      if (historyChangeCallback) {
-        historyChangeCallback(identity)
+      if (updateAfterCallback) {
+        try {
+          updateAfterCallback(identity)
+        } catch {}
 
         set({
-          historyChangeCallback: null,
+          updateAfterCallback: null,
         })
       }
     },
@@ -237,7 +239,7 @@ export const createTabsStore = (
     onChange: (changeTabIdentity, { replace, callback }) => {
       const { event, adapter, identity, findByIdentity } = get()
 
-      const resolve: HistoryCallbackSave = (identity) => {
+      const afterCallback: UpdateAfterCallback = (identity) => {
         const currentTab = findByIdentity(identity)!
         const name = replace ? "replace" : "push"
 
@@ -247,13 +249,13 @@ export const createTabsStore = (
       }
 
       if (R.equals(changeTabIdentity, identity)) {
-        resolve(identity)
+        afterCallback(identity)
 
         return
       }
 
       set({
-        historyChangeCallback: resolve,
+        updateAfterCallback: afterCallback,
       })
 
       if (replace) {

@@ -67,4 +67,4 @@ export type TabsAdapter<T = any> = (t: T & { event: EventEmitter }) => {
   replace(path: TabIdentity): void
 }
 
-export type HistoryCallbackSave = (_: TabIdentity) => void
+export type UpdateAfterCallback = (_: TabIdentity) => void
