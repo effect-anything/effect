@@ -12,43 +12,46 @@ export type TabIdentity = {
   hash: string
 }
 
-export type JumpTabIdentity =
-  | TabPathname
-  | {
-      pathname: string
-      search?: string
-      state?: unknown
-      hash?: string
-    }
+export type JumpTabIdentity = TabPathname | Partial<TabIdentity>
 
-export interface TabItem {
-  index: number
+export interface OnChangeMethodOptions {
+  replace?: boolean
+}
 
-  tabKey: TabKey
+export interface PushMethodOptions {
+  replace?: boolean
+}
 
-  identity: TabIdentity
+export interface SwitchToMethodOptions {
+  reload?: boolean
+  replace?: boolean
+}
 
-  getComponent: () => JSX.Element
+export interface ReloadMethodOptions {
+  tab?: OpenTab | TabKey
+  switch?: boolean
+  replace?: boolean
+}
 
-  properties: Record<string, any>
+export interface BackToMethodOptions {
+  backTo?: OpenTab | JumpTabIdentity
+  reload?: boolean
+  replace?: boolean
+}
 
-  isHead: boolean
+export interface CloseMethodOptions {
+  tab?: OpenTab | TabKey
+  backTo?: OpenTab | JumpTabIdentity
+  reload?: boolean
+  replace?: boolean
+}
 
-  isLast: boolean
+export interface CloseRightMethodOptions {
+  tab?: OpenTab
+}
 
-  reload(): Promise<OpenTab>
-
-  canClose: boolean
-
-  close(): Promise<OpenTab>
-
-  canCloseRight: boolean
-
-  closeRight(): Promise<OpenTab>
-
-  canCloseOthers: boolean
-
-  closeOthers(): Promise<OpenTab>
+export interface CloseOthersMethodOptions {
+  tab?: OpenTab
 }
 
 export type TabsAdapter<T = any> = (t: T & { event: EventEmitter }) => {

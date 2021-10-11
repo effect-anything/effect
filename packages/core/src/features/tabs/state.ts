@@ -4,48 +4,22 @@ import create from "zustand"
 import { getRandomKey, OpenTab, ReactChildren, tabKeyEq } from "./openTab"
 // @ts-expect-error
 import hash from "hash-string"
-import { UpdateAfterCallback, JumpTabIdentity, TabIdentity, TabKey, TabsAdapter } from "./types"
+import {
+  UpdateAfterCallback,
+  JumpTabIdentity,
+  TabIdentity,
+  TabKey,
+  TabsAdapter,
+  OnChangeMethodOptions,
+  PushMethodOptions,
+  SwitchToMethodOptions,
+  BackToMethodOptions,
+  ReloadMethodOptions,
+  CloseMethodOptions,
+  CloseRightMethodOptions,
+  CloseOthersMethodOptions,
+} from "./types"
 import { adapter as ReactRouterAdapter } from "./adapters/react-router"
-
-export interface OnChangeMethodOptions {
-  replace?: boolean
-}
-
-export interface PushMethodOptions {
-  replace?: boolean
-}
-
-export interface SwitchToMethodOptions {
-  reload?: boolean
-  replace?: boolean
-}
-
-export interface ReloadMethodOptions {
-  tab?: OpenTab | TabKey
-  switch?: boolean
-  replace?: boolean
-}
-
-export interface BackToMethodOptions {
-  backTo?: OpenTab | JumpTabIdentity
-  reload?: boolean
-  replace?: boolean
-}
-
-export interface CloseMethodOptions {
-  tab?: OpenTab | TabKey
-  backTo?: OpenTab | JumpTabIdentity
-  reload?: boolean
-  replace?: boolean
-}
-
-export interface CloseRightMethodOptions {
-  tab?: OpenTab
-}
-
-export interface CloseOthersMethodOptions {
-  tab?: OpenTab
-}
 
 export type State = {
   readonly event: EventEmitter
@@ -120,19 +94,11 @@ export const createTabsStore = (
 
   const initialTabInfo = buildIdentityInfoMemoize(initialIdentity)
 
-  const initialTabs = [
-    new OpenTab({
-      tabKey: initialTabInfo.hash,
-      identity: initialTabInfo.identity,
-      component: children,
-    }),
-  ]
-
   const store = create<State>((set, get) => ({
     event,
     adapter: adapterApi,
     identity: initialIdentity,
-    tabs: initialTabs,
+    tabs: [],
     updateAfterCallback: undefined,
     update: (identity, children) => {
       const { updateAfterCallback, tabs, adapter, findIndexByIdentity } = get()
@@ -146,7 +112,7 @@ export const createTabsStore = (
           tabs: R.adjust(
             index,
             (tab) => {
-              if (!R.equals(tab.identity, identity)) {
+              if (!R.eqBy(JSON.stringify, tab.identity, identity)) {
                 const { hash } = buildIdentityInfoMemoize(identity)
 
                 tab.identity.state = identity.state
@@ -164,6 +130,7 @@ export const createTabsStore = (
         const info = buildIdentityInfoMemoize(identity)
 
         const newTab = new OpenTab({
+          getState: get,
           tabKey: info.hash,
           identity: info.identity,
           component: children,
@@ -238,7 +205,7 @@ export const createTabsStore = (
 
           event.emit(name, currentTab)
 
-          resolve?.(currentTab)
+          resolve(currentTab)
         }
 
         if (R.equals(changeTabIdentity, identity)) {
@@ -266,12 +233,14 @@ export const createTabsStore = (
       const existTab = findByIdentity(identity)
 
       if (existTab) {
-        if (!R.equals(existTab.identity, identity)) {
+        if (!R.eqBy(JSON.stringify, existTab.identity, identity)) {
           const index = findIndexByKey(existTab.tabKey)
+          const { hash } = buildIdentityInfoMemoize(identity)
 
           existTab.identity.state = identity.state
           existTab.identity.search = identity.search
           existTab.identity.hash = identity.hash
+          existTab.tabKey = hash
 
           set({ tabs: R.update(index, existTab, tabs) })
         }
@@ -422,6 +391,19 @@ export const createTabsStore = (
       })
     },
   }))
+
+  const initialTabs = [
+    new OpenTab({
+      getState: store.getState,
+      tabKey: initialTabInfo.hash,
+      identity: initialTabInfo.identity,
+      component: children,
+    }),
+  ]
+
+  store.setState({
+    tabs: initialTabs,
+  })
 
   return store
 }
