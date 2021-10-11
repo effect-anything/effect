@@ -10,9 +10,11 @@ import { DefaultAdapterOptions, TabsAdapter } from "./types"
 import { State } from "../state"
 
 interface ReactRouterAdapterOptions extends DefaultAdapterOptions {
-  persistenceKey?: string
+  persistentKey?: string
 
   storage?: "sessionStorage" | "localStorage"
+
+  ignoreKeys?: Array<"state" | "search" | "hash">
 
   history: History
 }
@@ -20,16 +22,20 @@ interface ReactRouterAdapterOptions extends DefaultAdapterOptions {
 class ReactRouterAdapter extends TabsAdapter<ReactRouterAdapterOptions> {
   private readonly history: History
 
-  private persistenceKey: string
+  private persistentKey: string
 
   private storage: Storage
+
+  private ignoreKeys: string[]
 
   constructor(options: ReactRouterAdapterOptions) {
     super(options)
 
     this.history = options.history
 
-    this.persistenceKey = options.persistenceKey || "_TABS_PERSISTENT"
+    this.ignoreKeys = options.ignoreKeys ? options.ignoreKeys : ["state"]
+
+    this.persistentKey = options.persistentKey || "_TABS_PERSISTENT"
 
     this.storage = options.storage === "localStorage" ? localStorage : sessionStorage
   }
@@ -45,8 +51,7 @@ class ReactRouterAdapter extends TabsAdapter<ReactRouterAdapterOptions> {
   }
 
   public equal(a: TabIdentity, b: TabIdentity) {
-    // TODO: optional "search", "hash"
-    return R.eqBy(R.omit(["state"]), a, b)
+    return R.eqBy(R.omit(this.ignoreKeys), a, b)
   }
 
   public getIdentity(location: JumpTabIdentity) {
@@ -101,14 +106,14 @@ class ReactRouterAdapter extends TabsAdapter<ReactRouterAdapterOptions> {
       }
     })
 
-    this.storage.setItem(this.persistenceKey, JSON.stringify(value))
+    this.storage.setItem(this.persistentKey, JSON.stringify(value))
   }
 
   public recovery(getState: GetState<State>, children: ReactChildren) {
     let initialTabs: OpenTab[] = []
 
     try {
-      const persistentTabs: OpenTab[] = JSON.parse(this.storage.getItem(this.persistenceKey) || "")
+      const persistentTabs: OpenTab[] = JSON.parse(this.storage.getItem(this.persistentKey) || "")
 
       initialTabs = persistentTabs.map((tab) => {
         return new OpenTab({
