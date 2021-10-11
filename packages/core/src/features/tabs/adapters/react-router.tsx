@@ -1,6 +1,8 @@
 import * as R from "ramda"
+import React from "react"
 import type { History } from "history"
 import { TabIdentity, TabsAdapter } from "../types"
+import { OpenTab } from "../openTab"
 
 interface ReactRouterAdapterOptions {
   history: History
@@ -17,7 +19,7 @@ export const adapter: TabsAdapter<ReactRouterAdapterOptions> = ({ history }) => 
       return this.getIdentity(history.location)
     },
     equal(a, b) {
-      // "search", "hash"
+      // TODO: optional "search", "hash"
       return R.eqBy(R.omit(["state"]), a, b)
     },
     exist(tabs, tabIdentity) {
@@ -52,6 +54,42 @@ export const adapter: TabsAdapter<ReactRouterAdapterOptions> = ({ history }) => 
         hash: tabIdentity.hash,
         state: tabIdentity.state,
       })
+    },
+    getComponent(Component, identity, properties) {
+      // eslint-disable-next-line react/display-name
+      return () => <Component key={properties.key} location={identity} />
+    },
+    persistence(tabs) {
+      const value = tabs.map((tab) => {
+        return {
+          identity: tab.identity,
+          properties: tab.properties,
+          tabKey: tab.tabKey,
+        }
+      })
+
+      // TODO: optional storage, cacheKey
+      sessionStorage.setItem("_TABS_PERSISTENT", JSON.stringify(value))
+    },
+    recovery(getState, children) {
+      let initialTabs: OpenTab[] = []
+
+      try {
+        // TODO: optional storage, cacheKey
+        const persistentTabs: OpenTab[] = JSON.parse(sessionStorage.getItem("_TABS_PERSISTENT") || "")
+
+        initialTabs = persistentTabs.map((x) => {
+          return new OpenTab({
+            getState: getState,
+            tabKey: x.tabKey,
+            identity: x.identity,
+            // TODO: more tests
+            component: children,
+          })
+        })
+      } catch {}
+
+      return initialTabs
     },
   }
 }

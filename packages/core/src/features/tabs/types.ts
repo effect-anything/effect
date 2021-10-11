@@ -1,5 +1,8 @@
 import type { EventEmitter } from "events"
-import type { OpenTab } from "./openTab"
+import type { GetState } from "zustand"
+import type { FunctionComponent } from "react"
+import type { OpenTab, ReactChildren, TabProperties } from "./openTab"
+import type { State } from "./state"
 
 export type TabKey = string
 
@@ -68,6 +71,12 @@ export type TabsAdapter<T = any> = (t: T & { event: EventEmitter }) => {
   push(path: TabIdentity): void
 
   replace(path: TabIdentity): void
+
+  getComponent(component: FunctionComponent, identity: TabIdentity, properties: TabProperties): FunctionComponent
+
+  persistence?(tabs: OpenTab[]): void
+
+  recovery?(getState: GetState<State>, children: ReactChildren): OpenTab[]
 }
 
 export type UpdateAfterCallback = (_: TabIdentity) => void

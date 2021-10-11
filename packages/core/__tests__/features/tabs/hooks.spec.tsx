@@ -5,8 +5,7 @@ import React, { PropsWithChildren } from "react"
 import { renderHook, act } from "@testing-library/react-hooks"
 import { Router, Route, Switch } from "react-router-dom"
 import { Provider as TabsProvider } from "../../../src/features/tabs/provider"
-import { useTabsAction } from "../../../src/features/tabs/hooks"
-import { OpenTab } from "packages/core/src/features/tabs/openTab"
+import { useTabsAction, OpenTab } from "../../../src/features/tabs/hooks"
 
 const browserHistory = (options?: Parameters<typeof createBrowserHistory>) =>
   createBrowserHistory({
@@ -62,12 +61,12 @@ const wrapper = ({ history, children }: PropsWithChildren<{ history: History }>)
   )
 }
 
-describe.each(historyModes.slice(0, 1))("$name: browser location sync", ({ factory }) => {
+describe.each(historyModes)("$name: browser location sync", ({ factory }) => {
   let history: History
 
   beforeEach(() => {
     window.history.pushState({}, "Test page", "/")
-
+    sessionStorage.clear()
     history = factory()
   })
 
@@ -232,7 +231,7 @@ describe.each(historyModes)("$name: .switchTo", ({ factory }) => {
 
   beforeEach(() => {
     window.history.pushState({}, "Test page", "/")
-
+    sessionStorage.clear()
     history = factory()
   })
 
@@ -430,7 +429,7 @@ describe.each(historyModes)("$name: .push", ({ factory }) => {
 
   beforeEach(() => {
     window.history.pushState({}, "Test page", "/")
-
+    sessionStorage.clear()
     history = factory()
   })
 
@@ -572,7 +571,7 @@ describe.each(historyModes)("$name: .goBack", ({ factory }) => {
 
   beforeEach(() => {
     window.history.pushState({}, "Test page", "/")
-
+    sessionStorage.clear()
     history = factory()
   })
 
@@ -874,7 +873,7 @@ describe.each(historyModes)("$name: .reload", ({ factory }) => {
 
   beforeEach(() => {
     window.history.pushState({}, "Test page", "/")
-
+    sessionStorage.clear()
     history = factory()
   })
 
@@ -1090,7 +1089,7 @@ describe.each(historyModes)("$name: .close", ({ factory }) => {
 
   beforeEach(() => {
     window.history.pushState({}, "Test page", "/")
-
+    sessionStorage.clear()
     history = factory()
   })
 
@@ -1386,7 +1385,7 @@ describe.each(historyModes)("$name: .closeRight", ({ factory }) => {
 
   beforeEach(() => {
     window.history.pushState({}, "Test page", "/")
-
+    sessionStorage.clear()
     history = factory()
   })
 
@@ -1530,7 +1529,7 @@ describe.each(historyModes)("$name: .closeOthers", ({ factory }) => {
 
   beforeEach(() => {
     window.history.pushState({}, "Test page", "/")
-
+    sessionStorage.clear()
     history = factory()
   })
 

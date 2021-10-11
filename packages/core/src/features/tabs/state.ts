@@ -107,25 +107,29 @@ export const createTabsStore = (
 
       if (exist) {
         const index = findIndexByIdentity(identity)
+        const currentTab = tabs[index]
 
-        set({
-          tabs: R.adjust(
-            index,
-            (tab) => {
-              if (!R.eqBy(JSON.stringify, tab.identity, identity)) {
-                const { hash } = buildIdentityInfoMemoize(identity)
+        // location change
+        if (!R.eqBy(JSON.stringify, currentTab.identity, identity)) {
+          const { hash } = buildIdentityInfoMemoize(identity)
 
+          set({
+            tabs: R.adjust(
+              index,
+              (tab) => {
                 tab.identity.state = identity.state
                 tab.identity.search = identity.search
                 tab.identity.hash = identity.hash
                 tab.tabKey = hash
-              }
 
-              return tab
-            },
-            tabs
-          ),
-        })
+                return tab
+              },
+              tabs
+            ),
+          })
+
+          return
+        }
       } else {
         const info = buildIdentityInfoMemoize(identity)
 
@@ -401,14 +405,18 @@ export const createTabsStore = (
     },
   }))
 
-  const initialTabs = [
-    new OpenTab({
-      getState: store.getState,
-      tabKey: initialTabInfo.hash,
-      identity: initialTabInfo.identity,
-      component: children,
-    }),
-  ]
+  const initialTabs = adapterApi.recovery ? adapterApi.recovery(store.getState, children) : []
+
+  if (initialTabs.length === 0) {
+    initialTabs.push(
+      new OpenTab({
+        getState: store.getState,
+        tabKey: initialTabInfo.hash,
+        identity: initialTabInfo.identity,
+        component: children,
+      })
+    )
+  }
 
   store.setState({
     tabs: initialTabs,

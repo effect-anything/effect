@@ -26,7 +26,7 @@ export const getRandomKey = () => Math.ceil(Math.random() * 10000) + ""
 
 export const tabKeyEq = R.propEq("tabKey")
 
-interface ITabProperties {
+export interface TabProperties {
   title: string
   key: string
 }
@@ -45,11 +45,11 @@ export class OpenTab {
 
   public readonly identity: TabIdentity
 
-  public readonly properties: ITabProperties
+  public readonly properties: TabProperties
 
-  public readonly component: FunctionComponent<{
-    location: TabIdentity
-  }>
+  public children: ReactChildren
+
+  public component: FunctionComponent
 
   public get index() {
     return this.getState().findIndexByKey(this.tabKey)
@@ -82,19 +82,13 @@ export class OpenTab {
 
     this.identity = identity
 
-    this.component = withChildren(component)
-
     this.properties = {
       key: getRandomKey(),
       // TODO:
-      title: "title",
+      title: "TODO",
     }
-  }
 
-  public getComponent() {
-    const Component = this.component
-
-    return <Component key={this.properties.key} location={this.identity} />
+    this.component = getState().adapter.getComponent(withChildren(component), this.identity, this.properties)
   }
 
   public reload(options?: Omit<ReloadMethodOptions, "tab">) {

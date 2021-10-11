@@ -22,6 +22,12 @@ export const TabsSync: FunctionComponent = ({ children }) => {
     return unsubscribe
   }, [adapter, updateIdentity])
 
+  const tabs = useStore((state) => state.tabs)
+
+  useEffect(() => {
+    adapter.persistence?.(tabs)
+  }, [adapter, tabs])
+
   return null
 }
 
