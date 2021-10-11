@@ -1,6 +1,6 @@
 import React, { FunctionComponent, ReactNode, cloneElement, isValidElement } from "react"
 import * as R from "ramda"
-import { CloseRightMethodOptions, ReloadMethodOptions, TabIdentity } from "./types"
+import { CloseMethodOptions, CloseRightMethodOptions, ReloadMethodOptions, TabIdentity } from "./types"
 import type { State } from "./state"
 import type { GetState } from "zustand"
 
@@ -99,6 +99,10 @@ export class OpenTab {
 
   public reload(options?: Omit<ReloadMethodOptions, "tab">) {
     return this.getState().reload({ ...options, tab: this })
+  }
+
+  public close(options?: Omit<CloseMethodOptions, "tab">) {
+    return this.getState().close({ ...options, tab: this })
   }
 
   public closeRight(options?: Omit<CloseRightMethodOptions, "tab">) {

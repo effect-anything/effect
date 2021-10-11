@@ -315,14 +315,23 @@ export const createTabsStore = (
       const isSwitch = options.switch ?? true
 
       const reloadKey = (tab: OpenTab) => {
-        const idx = findIndexByKey(tab.tabKey)
-        const newTab = R.assocPath(["properties", "key"], getRandomKey(), tabs[idx])
+        const index = findIndexByKey(tab.tabKey)
 
-        set({ tabs: R.update(idx, newTab, tabs) })
+        set({
+          tabs: R.adjust(
+            index,
+            (tab) => {
+              tab.properties.key = getRandomKey()
 
-        event.emit("reload", newTab)
+              return tab
+            },
+            tabs
+          ),
+        })
 
-        return Promise.resolve(tab)
+        event.emit("reload", tabs[index])
+
+        return Promise.resolve(tabs[index])
       }
 
       if (reloadTab.tabKey !== active.tabKey && isSwitch) {
