@@ -1,95 +1,128 @@
 import * as R from "ramda"
 import React from "react"
 import type { History } from "history"
-import { TabIdentity, TabsAdapter } from "../types"
+import type { GetState } from "zustand"
+import type { FunctionComponent } from "react"
+import type { ReactChildren, TabProperties } from "../openTab"
 import { OpenTab } from "../openTab"
+import { JumpTabIdentity, TabIdentity } from "../types"
+import { DefaultAdapterOptions, TabsAdapter } from "./types"
+import { State } from "../state"
 
-interface ReactRouterAdapterOptions {
+interface ReactRouterAdapterOptions extends DefaultAdapterOptions {
+  persistenceKey?: string
+
+  storage?: "sessionStorage" | "localStorage"
+
   history: History
 }
 
-export const adapter: TabsAdapter<ReactRouterAdapterOptions> = ({ history }) => {
-  return {
-    listen(callback) {
-      const unsubscribe = history.listen((location) => callback(this.getIdentity(location)))
+class ReactRouterAdapter extends TabsAdapter<ReactRouterAdapterOptions> {
+  private readonly history: History
 
-      return unsubscribe
-    },
-    identity() {
-      return this.getIdentity(history.location)
-    },
-    equal(a, b) {
-      // TODO: optional "search", "hash"
-      return R.eqBy(R.omit(["state"]), a, b)
-    },
-    exist(tabs, tabIdentity) {
-      const index = R.findIndex((tab) => this.equal(tab.identity, tabIdentity), tabs)
+  private persistenceKey: string
 
-      return index !== -1
-    },
-    getIdentity(location) {
-      const isString = typeof location === "string"
+  private storage: Storage
 
-      const id: TabIdentity = {
-        pathname: isString ? location : location.pathname || "",
-        search: isString ? "" : location.search ? decodeURIComponent(location.search) : "",
-        state: isString ? {} : typeof location.state === "undefined" ? {} : location.state || {},
-        hash: isString ? "" : location.hash || "",
+  constructor(options: ReactRouterAdapterOptions) {
+    super(options)
+
+    this.history = options.history
+
+    this.persistenceKey = options.persistenceKey || "_TABS_PERSISTENT"
+
+    this.storage = options.storage === "localStorage" ? localStorage : sessionStorage
+  }
+
+  public listen(callback: (location: TabIdentity) => void): () => void {
+    const unsubscribe = this.history.listen((location) => callback(this.getIdentity(location)))
+
+    return unsubscribe
+  }
+
+  public identity() {
+    return this.getIdentity(this.history.location)
+  }
+
+  public equal(a: TabIdentity, b: TabIdentity) {
+    // TODO: optional "search", "hash"
+    return R.eqBy(R.omit(["state"]), a, b)
+  }
+
+  public getIdentity(location: JumpTabIdentity) {
+    const isString = typeof location === "string"
+
+    const id: TabIdentity = {
+      pathname: isString ? location : location.pathname || "",
+      search: isString ? "" : location.search ? decodeURIComponent(location.search) : "",
+      state: isString ? {} : typeof location.state === "undefined" ? {} : location.state || {},
+      hash: isString ? "" : location.hash || "",
+    }
+
+    return id
+  }
+
+  public exist(tabs: OpenTab[], identity: TabIdentity) {
+    const index = R.findIndex((tab) => this.equal(tab.identity, identity), tabs)
+
+    return index !== -1
+  }
+
+  public push(identity: TabIdentity) {
+    this.history.push({
+      pathname: identity.pathname,
+      search: identity.search,
+      hash: identity.hash,
+      state: identity.state,
+    })
+  }
+
+  public replace(identity: TabIdentity) {
+    this.history.replace({
+      pathname: identity.pathname,
+      search: identity.search,
+      hash: identity.hash,
+      state: identity.state,
+    })
+  }
+
+  public getComponent(Component: FunctionComponent, identity: TabIdentity, properties: TabProperties) {
+    // TODO: refactor
+    // eslint-disable-next-line react/display-name
+    return () => <Component key={properties.key} location={identity} />
+  }
+
+  public persistence(tabs: OpenTab[]) {
+    const value = tabs.map((tab) => {
+      return {
+        identity: tab.identity,
+        properties: tab.properties,
+        tabKey: tab.tabKey,
       }
+    })
 
-      return id
-    },
-    push(tabIdentity) {
-      history.push({
-        pathname: tabIdentity.pathname,
-        search: tabIdentity.search,
-        hash: tabIdentity.hash,
-        state: tabIdentity.state,
-      })
-    },
-    replace(tabIdentity) {
-      history.replace({
-        pathname: tabIdentity.pathname,
-        search: tabIdentity.search,
-        hash: tabIdentity.hash,
-        state: tabIdentity.state,
-      })
-    },
-    getComponent(Component, identity, properties) {
-      // eslint-disable-next-line react/display-name
-      return () => <Component key={properties.key} location={identity} />
-    },
-    persistence(tabs) {
-      const value = tabs.map((tab) => {
-        return {
-          identity: tab.identity,
-          properties: tab.properties,
+    this.storage.setItem(this.persistenceKey, JSON.stringify(value))
+  }
+
+  public recovery(getState: GetState<State>, children: ReactChildren) {
+    let initialTabs: OpenTab[] = []
+
+    try {
+      const persistentTabs: OpenTab[] = JSON.parse(this.storage.getItem(this.persistenceKey) || "")
+
+      initialTabs = persistentTabs.map((tab) => {
+        return new OpenTab({
+          getState: getState,
           tabKey: tab.tabKey,
-        }
-      })
-
-      // TODO: optional storage, cacheKey
-      sessionStorage.setItem("_TABS_PERSISTENT", JSON.stringify(value))
-    },
-    recovery(getState, children) {
-      let initialTabs: OpenTab[] = []
-
-      try {
-        // TODO: optional storage, cacheKey
-        const persistentTabs: OpenTab[] = JSON.parse(sessionStorage.getItem("_TABS_PERSISTENT") || "")
-
-        initialTabs = persistentTabs.map((x) => {
-          return new OpenTab({
-            getState: getState,
-            tabKey: x.tabKey,
-            identity: x.identity,
-            // TODO: more tests
-            component: children,
-          })
+          identity: tab.identity,
+          // TODO: more tests
+          component: children,
         })
-      } catch {}
+      })
+    } catch {}
 
-      return initialTabs
-    },
+    return initialTabs
   }
 }
+
+export { ReactRouterAdapter }

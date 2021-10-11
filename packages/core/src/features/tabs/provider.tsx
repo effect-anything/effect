@@ -1,8 +1,7 @@
 import React, { FunctionComponent, useEffect } from "react"
 import { TabsStoreProvider, useStore } from "./context"
 import { ReactChildren } from "./openTab"
-import { createTabsStore } from "./state"
-import { TabsAdapter } from "./types"
+import { createTabsStore, TabsStoreOptions } from "./state"
 
 export const TabsSync: FunctionComponent = ({ children }) => {
   const identity = useStore((state) => state.identity)
@@ -31,11 +30,15 @@ export const TabsSync: FunctionComponent = ({ children }) => {
   return null
 }
 
-export const Provider: FunctionComponent<{ adapter?: TabsAdapter; tabChildren?: ReactChildren }> = ({
-  tabChildren,
-  children,
-  ...rest
-}) => {
+interface ProviderProps {
+  adapter?: TabsStoreOptions["adapter"]
+
+  adapterOptions?: TabsStoreOptions["adapterOptions"]
+
+  tabChildren?: ReactChildren
+}
+
+export const Provider: FunctionComponent<ProviderProps> = ({ tabChildren, children, ...rest }) => {
   return (
     <TabsStoreProvider createStore={() => createTabsStore(children, rest)}>
       <TabsSync>{children}</TabsSync>

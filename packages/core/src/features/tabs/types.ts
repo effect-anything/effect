@@ -1,8 +1,4 @@
-import type { EventEmitter } from "events"
-import type { GetState } from "zustand"
-import type { FunctionComponent } from "react"
-import type { OpenTab, ReactChildren, TabProperties } from "./openTab"
-import type { State } from "./state"
+import type { OpenTab } from "./openTab"
 
 export type TabKey = string
 
@@ -55,28 +51,6 @@ export interface CloseRightMethodOptions {
 
 export interface CloseOthersMethodOptions {
   tab?: OpenTab
-}
-
-export type TabsAdapter<T = any> = (t: T & { event: EventEmitter }) => {
-  listen(callback: (location: TabIdentity) => void): () => void
-
-  identity(): TabIdentity
-
-  getIdentity(id: JumpTabIdentity): TabIdentity
-
-  equal(a: TabIdentity, b: TabIdentity): boolean
-
-  exist(tabs: OpenTab[], identity: TabIdentity): boolean
-
-  push(path: TabIdentity): void
-
-  replace(path: TabIdentity): void
-
-  getComponent(component: FunctionComponent, identity: TabIdentity, properties: TabProperties): FunctionComponent
-
-  persistence?(tabs: OpenTab[]): void
-
-  recovery?(getState: GetState<State>, children: ReactChildren): OpenTab[]
 }
 
 export type UpdateAfterCallback = (_: TabIdentity) => void

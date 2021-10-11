@@ -9,7 +9,6 @@ import {
   JumpTabIdentity,
   TabIdentity,
   TabKey,
-  TabsAdapter,
   OnChangeMethodOptions,
   PushMethodOptions,
   SwitchToMethodOptions,
@@ -19,7 +18,8 @@ import {
   CloseRightMethodOptions,
   CloseOthersMethodOptions,
 } from "./types"
-import { adapter as ReactRouterAdapter } from "./adapters/react-router"
+import type { TabsAdapter } from "./adapters/types"
+import { ReactRouterAdapter } from "./adapters/react-router"
 
 export type State = {
   readonly event: EventEmitter
@@ -30,7 +30,7 @@ export type State = {
 
   readonly updateAfterCallback: UpdateAfterCallback | undefined
 
-  readonly adapter: ReturnType<TabsAdapter>
+  readonly adapter: TabsAdapter
 
   update(identity: TabIdentity, children: ReactChildren): void
 
@@ -65,8 +65,10 @@ export type State = {
   closeOthers(options?: CloseOthersMethodOptions): Promise<OpenTab>
 }
 
-interface TabsStoreOptions {
-  adapter?: TabsAdapter
+export interface TabsStoreOptions {
+  adapter?: new (options: any) => TabsAdapter
+
+  adapterOptions?: Record<string, unknown>
 }
 
 const buildIdentityInfo = (id: TabIdentity) => {
@@ -80,11 +82,12 @@ const buildIdentityInfo = (id: TabIdentity) => {
 
 export const createTabsStore = (
   children: ReactChildren,
-  { adapter = ReactRouterAdapter, ...rest }: TabsStoreOptions
+  { adapter: Adapter = ReactRouterAdapter, adapterOptions, ...rest }: TabsStoreOptions
 ) => {
   const event = new EventEmitter()
-  const adapterApi = adapter({
+  const adapterApi = new Adapter({
     ...rest,
+    ...adapterOptions,
     event,
   })
 
